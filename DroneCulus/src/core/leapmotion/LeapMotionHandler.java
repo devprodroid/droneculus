@@ -3,6 +3,7 @@ package core.leapmotion;
 import java.util.Observable;
 
 import com.leapmotion.leap.Controller;
+import com.leapmotion.leap.Frame;
 import com.leapmotion.leap.Listener;
 
 import core.commands.Commands;
@@ -12,9 +13,9 @@ import core.templates.ContTemplateFactory;
 import core.templates.IContTemplate;
 import core.templates.TemplateVersions.Template;
 
-public class LeapMotionHandler extends Observable implements Runnable {
+public class LeapMotionHandler extends Observable {
 	
-	private SampleListener listener = null;
+	private LeapListener listener = null;
 	
 	
 	// boolean, if Controller is connected
@@ -25,37 +26,19 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	// boolean if ControllerHandler is still running
 	private boolean running = true;
+	
+	// boolean if new frame ready
+	public boolean frameAvailable = false;
 
-	// boolean if ControllerHandler is currently waiting
-	private boolean waiting = true;
 
 	public LeapMotionHandler(Template version, HoverInvoker hoverInv, Controller controller) {
 		switchVersion(version);
 		addObserver(hoverInv);
-		listener = new SampleListener(); 
+		listener = new LeapListener(this); 
 		controller.addListener(listener);
+		
 	}
 
-	@SuppressWarnings("unused")
-	@Override
-	public void run() {
-
-		while (running) {
-
-			if (true) {
-				Control.out
-				.println("Lost Connection to LeapMotion Controller. Landing invoked!");
-			} else {
-				if (Control.data.isFlying()) {
-					Commands.landing();
-					Control.data.setFlying(false);
-					Control.out
-							.println("Lost Connection to LeapMotion Controller. Landing invoked!");
-					sleep(200);
-				}
-			}
-		}
-	}
 
 	/**
 	 * switch used Template
@@ -67,15 +50,6 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		template = ContTemplateFactory.makeTemplate(version);
 	}
 
-	// let sleep
-	private void sleep(long millis) {
-		try {
-			Thread.sleep(millis);
-		} catch (InterruptedException e) {
-			e.printStackTrace(Control.out);
-		}
-	}
-
 	/**
 	 * set the ControllerHandler waiting or not
 	 * 
@@ -83,17 +57,63 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	 *            = boolean if waiting or not
 	 */
 	public void setWaiting(boolean waiting) {
-		this.waiting = waiting;
+		//this.waiting = waiting;
 	}
 }
 
-class SampleListener extends Listener {
+class LeapListener extends Listener {
 
+	LeapMotionHandler handler=null;
+	
+	public LeapListener(LeapMotionHandler handler){
+		this.handler=handler;
+	}
+	
     public void onConnect(Controller controller) {
         System.out.println("Connected");
     }
+    
+    public void onDisconnect(Controller controller) {
+        System.out.println("Leap motion Disconnected");
+        
+		if(Control.data.isFlying()) {
+			Commands.landing();
+			Control.data.setFlying(false);
+			Control.out.println("Lost Connection to LeapMotionController. Landing invoked!");		
+			
+		}
+    }
 
+    public void onExit (Controller controller){
+        System.out.println("Exited");        
+    }
+    
+    public void onInit (Controller controller){
+        System.out.println("Initialized");
+    }   
+    
+    
     public void onFrame(Controller controller) {
-        System.out.println("Frame available");
+    	handler.frameAvailable=true;
+       // System.out.println("Frame available");
+        
+		if(controller.isConnected()) //controller is a Controller object
+		{
+		    Frame frame = controller.frame(); //The latest frame
+		    //Frame previous = controller.frame(1); //The previous frame
+		    //System.out.println(frame.timestamp());
+		    
+		    
+		    if  (frame.hands().count()>0) {
+		    	System.out.println("hand found");
+				if(Control.data.isFlying()) {
+					Commands.landing();
+					Control.data.setFlying(false);
+					Control.out.println("Lost Connection to LeapMotionController. Landing invoked!");		
+					
+				}
+		    }
+		    
+		}
     }
 }

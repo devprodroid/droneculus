@@ -24,7 +24,7 @@ public class LeapMotionManager {
 	private void initController() {
 		
 		
-		new Thread(handler).start();
+		//new Thread(handler).start();
 	}
 	
 	public void switchVersion(Template version) {
