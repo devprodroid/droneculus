@@ -8,7 +8,7 @@ public class TemplateVersions {
 	 * Register the name of new Versions here.
 	 */
 	public enum Template{
-		Version1, Version2
+		Version1, Version2, LeapMotion,
 	}
 	
 	public static String[] templatesToString() {

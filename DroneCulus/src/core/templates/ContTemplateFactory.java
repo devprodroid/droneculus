@@ -13,6 +13,10 @@ public class ContTemplateFactory {
 			case Version2: 
 				return new ContTemplate02();
 				
+			case LeapMotion: 
+				return new ContTemplate02();
+													
+				
 			default:
 				return null;			
 		}

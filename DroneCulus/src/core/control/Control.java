@@ -2,9 +2,6 @@ package core.control;
 
 import java.io.PrintStream;
 
-import com.leapmotion.leap.Controller;
-
-import core.leapmotion.LeapMotionHandler;
 import core.logging.ExceptionListener;
 import core.logging.FlightOutput;
 import core.oculusrift.OculusRiftEventManager;

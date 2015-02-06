@@ -1,7 +1,5 @@
 package core.oculusrift;
 
-import com.leapmotion.leap.Leap;
-
 import core.commands.HoverInvoker;
 import core.control.Control;
 import core.templates.TemplateVersions.Template;

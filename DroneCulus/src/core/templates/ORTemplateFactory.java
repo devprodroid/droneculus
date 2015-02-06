@@ -13,6 +13,9 @@ public class ORTemplateFactory {
 			case Version2: 
 				return new ORTemplate02();
 				
+			case LeapMotion: 
+				return new ORTemplate02();
+				
 			default:
 				return null;		
 		}
