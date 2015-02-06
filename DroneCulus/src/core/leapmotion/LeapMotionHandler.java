@@ -30,6 +30,10 @@ public class LeapMotionHandler extends Observable {
 
 	// boolean if ControllerHandler is still running
 	private boolean isWaiting = false;
+	
+	public void setChangedFlag(){
+		setChanged();
+	}
 
 	// boolean if new frame ready
 	public boolean frameProcessing = false;
@@ -54,9 +58,7 @@ public class LeapMotionHandler extends Observable {
 		setTemplate(LeapTemplateFactory.makeTemplate(version));
 	}
 
-	public void setChanged() {
-		setChanged();
-	}
+
 
 	/**
 	 * set the ControllerHandler waiting or not
@@ -149,6 +151,7 @@ class LeapListener extends Listener {
 		Hand leftHand = hands.leftmost();
 		Hand rightHand = hands.rightmost();
 		// System.out.println("X:"+rightHand.palmPosition().getX()+"Y:"+rightHand.palmPosition().getY()+"Z:"+rightHand.palmPosition().getZ());
+		handler.setChangedFlag();
 		if (rightHand.isValid() && leftHand.isValid()) {
 			if (leftHand.palmPosition().getZ() < -85
 					&& rightHand.palmPosition().getZ() < -85) {
@@ -164,7 +167,7 @@ class LeapListener extends Listener {
 				System.out.println("BACKWARD");
 			} else {
 				//System.out.println("STOP");
-				//handler.notifyObservers(true); // hover!
+				handler.notifyObservers(true); // hover!
 			}
 		}
 	}
