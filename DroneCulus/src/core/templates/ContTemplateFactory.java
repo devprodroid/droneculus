@@ -15,6 +15,9 @@ public class ContTemplateFactory {
 				
 			case LeapMotion: 
 				return new ContTemplate02();
+			
+			case LeapMotionHMD: 
+				return new ContTemplate02();
 													
 				
 			default:

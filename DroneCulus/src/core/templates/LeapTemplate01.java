@@ -4,7 +4,7 @@ import core.commands.Commands;
 import core.control.Control;
 
 /**
- * Template LeapMotion
+ * Template LeapMotion Desktop
  *
  */
 public class LeapTemplate01 implements ILeapTemplate {

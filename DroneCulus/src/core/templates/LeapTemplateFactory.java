@@ -15,7 +15,11 @@ public class LeapTemplateFactory {
 			
 			case LeapMotion: 
 				return new LeapTemplate01();
-							
+				
+			case LeapMotionHMD: 
+				return new LeapTemplate02();
+
+				
 			default:
 				return null;			
 		}

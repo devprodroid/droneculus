@@ -1,25 +1,33 @@
 package core.leapmotion;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Observable;
+
+import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageOutputStream;
+
+import processing.core.PImage;
 
 import com.leapmotion.leap.Controller;
 import com.leapmotion.leap.Frame;
 import com.leapmotion.leap.Hand;
 import com.leapmotion.leap.HandList;
+import com.leapmotion.leap.Image;
+import com.leapmotion.leap.ImageList;
+import com.leapmotion.leap.Leap;
 import com.leapmotion.leap.Listener;
 
 import core.commands.Commands;
 import core.commands.HoverInvoker;
 import core.control.Control;
-import core.templates.IContTemplate;
 import core.templates.ILeapTemplate;
 import core.templates.LeapTemplateFactory;
 import core.templates.TemplateVersions.Template;
 import core.utils.Config;
 
 public class LeapMotionHandler extends Observable implements Runnable {
-
-	private LeapListener listener = null;
 
 	// boolean, if Controller is connected
 	private boolean isConnected = true;
@@ -35,69 +43,23 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	private Controller controller = null;
 
-	public void setChangedFlag() {
-		setChanged();
-	}
-
 	// boolean if new frame ready
 	public boolean frameProcessing = false;
 
 	public LeapMotionHandler(Template version, HoverInvoker hoverInv,
 			Controller controller) {
+		this.controller = controller;
 		switchVersion(version);
 		addObserver(hoverInv);
 
-		// listener = new LeapListener(this);
-		// controller.addListener(listener);
-
-		this.controller = controller;
+		// TODO: enable image policy by demand
 		controller.setPolicy(Controller.PolicyFlag.POLICY_IMAGES);
+
 	}
 
-	/**
-	 * switch used Template
-	 * 
-	 * @param version
-	 *            = Version of Template to be used
-	 */
-	public void switchVersion(Template version) {
-		setTemplate(LeapTemplateFactory.makeTemplate(version));
-	}
-
-	/**
-	 * set the ControllerHandler waiting or not
-	 * 
-	 * @param waiting
-	 *            = boolean if waiting or not
-	 */
-	public void setWaiting(boolean waiting) {
-		// this.waiting = waiting;
-	}
-
-	public ILeapTemplate getTemplate() {
-		return template;
-	}
-
-	public void setTemplate(ILeapTemplate template) {
-		this.template = template;
-	}
-
-	public boolean isWaiting() {
-		return isWaiting;
-	}
-
-	public void stop() {
-		setWaiting(true);
-	}
-
-	public void start() {
-		setWaiting(false);
-	}
-
-	@SuppressWarnings("unused")
 	@Override
 	public void run() {
-		Control.out.println("XBOXAdapter running...");
+		Control.out.println("LeapMotion running...");
 
 		// when running = false ControllerHandler will be shut down
 		while (running) {
@@ -117,7 +79,14 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 					Frame frame = controller.frame(); // The latest frame
 
-					whatGesture(frame, templateCopy);
+					// whatGesture(frame, templateCopy);
+					try {
+						getImage(frame);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
 				}
 
 				// else sleep a moment and notify HoverInvoker, that
@@ -135,12 +104,63 @@ public class LeapMotionHandler extends Observable implements Runnable {
 					Commands.landing();
 					Control.data.setFlying(false);
 					Control.out
-							.println("Lost Connection to XBOX Controller. Landing invoked!");
+							.println("Lost Connection to Leap Motion Controller. Landing invoked!");
 					sleep(200);
 				}
 			}
 		}
 
+	}
+
+	/*
+	 * returns BufferedImage from one of the LeapMotion cameras
+	 */
+	private BufferedImage getImage(Frame frame) throws Exception {
+
+		int r = 0;
+		int g = 0;
+		int b = 0;
+		if (frame.isValid()) {
+			if (frame.images().count() > 0) {
+				// get Image from camera #0
+				Image image = frame.images().get(0);
+
+				BufferedImage bufferedImage = new BufferedImage(image.width(),
+						image.height(), BufferedImage.TYPE_INT_RGB);
+
+				// Get byte array containing the image data from Image object
+				// Width*height*colordepth
+				byte[] imageData = image.data();
+
+				int i = 0;
+
+				for (int j = 0; j < image.height(); j++) {// spalte
+					for (int k = 0; k < image.width(); k++) {// zeile
+
+						// convert pixel to unsigned and shift into place
+						r = (imageData[i] & 0xFF) << 16;
+						g = (imageData[i] & 0xFF) << 8;
+						b = (imageData[i] & 0xFF);
+
+						int col = r | b | g;
+
+						// set pixel at k,j to pixelcolor
+						bufferedImage.setRGB(k, j, col);
+
+						i++;
+					}
+				}
+				return bufferedImage;
+				// File f = new File("c:/MyFile.png");
+				// ImageIO.write(bufferedImage, "PNG", f);
+				// System.out.println("image saved");
+
+			}
+
+		} else {
+			throw new Exception("Invalid Frame");
+		}
+		return null;
 	}
 
 	// let sleep
@@ -178,6 +198,61 @@ public class LeapMotionHandler extends Observable implements Runnable {
 			}
 		}
 	}
+
+	public void getLeapFrame() {
+		Frame frame = controller.frame();
+		if (frame.isValid()) {
+			ImageList images = frame.images();
+
+		}
+
+	}
+
+	/**
+	 * switch used Template
+	 * 
+	 * @param version
+	 *            = Version of Template to be used
+	 */
+	public void switchVersion(Template version) {
+		setTemplate(LeapTemplateFactory.makeTemplate(version));
+		if (version == Template.LeapMotionHMD) {
+			controller.setPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
+		} else {
+			controller.setPolicy(Controller.PolicyFlag.POLICY_DEFAULT);
+		}
+	}
+
+	/**
+	 * set the ControllerHandler waiting or not
+	 * 
+	 * @param waiting
+	 *            = boolean if waiting or not
+	 */
+	public void setWaiting(boolean waiting) {
+		// this.waiting = waiting;
+	}
+
+	public ILeapTemplate getTemplate() {
+		return template;
+	}
+
+	public void setTemplate(ILeapTemplate template) {
+		this.template = template;
+	}
+
+	public boolean isWaiting() {
+		return isWaiting;
+	}
+
+	public void stop() {
+		setWaiting(true);
+	}
+
+	public void start() {
+		setWaiting(false);
+	}
+
 }
 
 class LeapListener extends Listener {
@@ -236,7 +311,7 @@ class LeapListener extends Listener {
 
 	private void whatGesture(Frame frame, ILeapTemplate templateCopy) {
 		// TODO Auto-generated method stub
-		//moved to thread
+		// moved to thread
 	}
 
 }

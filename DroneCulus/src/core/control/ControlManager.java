@@ -12,6 +12,9 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
+import com.leapmotion.leap.Controller;
+import com.leapmotion.leap.Leap;
+
 import core.commands.HoverInvoker;
 import core.controller.ControllerManager;
 import core.leapmotion.LeapMotionManager;
@@ -38,21 +41,24 @@ public class ControlManager {
 	// DeviceManager
 	private OculusRiftManager curORManager;
 	private ControllerManager curContManager;
-	private LeapMotionManager curLeapManager;
+	private LeapMotionManager  curLeapManager;
 
 	// holds HUDColorizer, so that it can be displayed on Buttonpress
 	private HUDColorizer colorizer;
 
 	// initializes HoverInvoker
 	private HoverInvoker hoverInvoker;
+	
+	//initialize LeapMotionController
+	private Controller leapController;
 
-	public ControlManager(FlightOutput flightOut) {
+	public ControlManager(FlightOutput flightOut ,Controller controller) {
 
 		colorizer = new HUDColorizer();
 		hoverInvoker = new HoverInvoker();
 
 		this.flightOut = flightOut;
-
+		
 		controlView = new ControlView();
 		controlView.addStartButtonListener(new StartButtonListener());
 		controlView.addLogCheckBoxListener(new LogBoxListener());
@@ -62,6 +68,8 @@ public class ControlManager {
 				new CustomBatteryListener());
 		Control.drone.start();
 		controlView.startDroneConnectionCheck();
+		
+		this.leapController=controller;
 
 		videoView = new VideoView();
 		addVideoViewExitOptions();
@@ -134,7 +142,7 @@ public class ControlManager {
 	 */
 	private void startLeapMotionManager(Template version) throws Exception {
 		if (curLeapManager == null) {
-			curLeapManager = new LeapMotionManager(version, hoverInvoker);
+			curLeapManager = new LeapMotionManager(version, hoverInvoker, leapController);
 			curLeapManager.start();
 		} else {
 			curLeapManager.switchVersion(version);
@@ -158,6 +166,7 @@ public class ControlManager {
 						videoView.setVisible(false);
 						curORManager.stop();
 						curContManager.stop();
+						curLeapManager.stop();
 					}
 				});
 
@@ -167,6 +176,7 @@ public class ControlManager {
 				videoView.setVisible(false);
 				curORManager.stop();
 				curContManager.stop();
+				curLeapManager.stop();
 			}
 		});
 
@@ -208,7 +218,12 @@ public class ControlManager {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-
+			try {
+				//startWithConfig(Template.LeapMotionHMD);
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			if (Control.isDroneConnected) {
 
 				String configString = controlView.getSelectedItem();
@@ -224,8 +239,10 @@ public class ControlManager {
 						break;
 
 					case "LeapMotion":
-						startWithConfig(Template.LeapMotion);// TODO: leapMotion
-															// einfügen
+						startWithConfig(Template.LeapMotion);
+						break;
+					case "LeapMotionHMD":
+						startWithConfig(Template.LeapMotionHMD);
 						break;
 
 					default:

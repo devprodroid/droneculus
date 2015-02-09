@@ -4,22 +4,28 @@ import com.leapmotion.leap.Controller;
 
 import core.commands.HoverInvoker;
 import core.templates.TemplateVersions.Template;
+import de.yadrone.base.ARDrone;
 
 public class LeapMotionManager {
 	LeapMotionHandler handler = null;
-
 	Controller controller = null;
 
+	
 	// listener etc
 
-	public LeapMotionManager(Template version, HoverInvoker hoverInv)
+	public Controller getController() {
+		return controller;
+	}
+
+	public LeapMotionManager(Template version, HoverInvoker hoverInv,Controller controller)
 			throws Exception {
 
-		controller = new Controller();
-
+		this.controller = controller;
+		
 		handler = new LeapMotionHandler(version, hoverInv, controller);
 		initController();
-	}
+		
+		}
 
 	private void initController() {
 
