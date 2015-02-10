@@ -3,13 +3,9 @@ package core.video;
 import java.awt.image.BufferedImage;
 import java.util.Observable;
 
-import com.leapmotion.leap.Controller;
-import com.leapmotion.leap.Frame;
-import com.leapmotion.leap.Image;
-import com.leapmotion.leap.Listener;
+
 
 import core.control.Control;
-import core.utils.Config;
 import de.yadrone.base.ARDrone;
 import de.yadrone.base.video.ImageListener;
 
@@ -23,6 +19,12 @@ public class VideoListener extends Observable {
 
 	public VideoListener() {
 		Control.isDroneConnected = true;
+		
+		
+
+	
+		
+		
 		// TODO: Evaluate current configuration
 		drone = Control.drone;
 		drone.getVideoManager().addImageListener(new ImageListener() {

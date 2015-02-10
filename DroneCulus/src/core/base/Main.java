@@ -5,8 +5,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+
+import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamPanel;
+import com.github.sarxos.webcam.WebcamResolution;
 
 import core.control.Control;
 
@@ -48,7 +53,14 @@ public class Main {
 	
 	public static void main(String[] args) {
 
+
+		
+		
 		try {
+		
+
+			
+			
 			Control.start();
 		} catch (Exception e) {		
 			
