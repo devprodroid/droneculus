@@ -73,6 +73,7 @@ public class ControlManager {
 
 		videoView = new VideoView();
 		addVideoViewExitOptions();
+	
 	}
 
 	/**

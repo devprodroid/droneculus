@@ -79,13 +79,13 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 					Frame frame = controller.frame(); // The latest frame
 
-					// whatGesture(frame, templateCopy);
-					try {
-						getImage(frame);
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					whatGesture(frame, templateCopy);
+					// try {
+					// // getImage(frame);
+					// } catch (Exception e) {
+					// // TODO Auto-generated catch block
+					// e.printStackTrace();
+					// }
 
 				}
 
@@ -199,15 +199,6 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		}
 	}
 
-	public void getLeapFrame() {
-		Frame frame = controller.frame();
-		if (frame.isValid()) {
-			ImageList images = frame.images();
-
-		}
-
-	}
-
 	/**
 	 * switch used Template
 	 * 
@@ -255,63 +246,63 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 }
 
-class LeapListener extends Listener {
-
-	LeapMotionHandler handler = null;
-
-	public LeapListener(LeapMotionHandler handler) {
-		this.handler = handler;
-	}
-
-	public void onConnect(Controller controller) {
-		System.out.println("Connected");
-	}
-
-	public void onDisconnect(Controller controller) {
-		System.out.println("Leap motion Disconnected");
-
-		if (Control.data.isFlying()) {
-			Commands.landing();
-			Control.data.setFlying(false);
-			Control.out
-					.println("Lost Connection to LeapMotionController. Landing invoked!");
-
-		}
-	}
-
-	public void onExit(Controller controller) {
-		System.out.println("Exited");
-	}
-
-	public void onInit(Controller controller) {
-		System.out.println("Initialized");
-		handler.setWaiting(false);
-	}
-
-	public void onFrame(Controller controller) {
-
-		if (!handler.frameProcessing) { // skip frames as long as another is
-										// being processed
-			handler.frameProcessing = true;
-			// if (!handler.isWaiting()) {
-			if (controller.isConnected()) {
-				Frame frame = controller.frame(); // The latest frame
-
-				ILeapTemplate templateCopy = handler.getTemplate().copy();
-
-				whatGesture(frame, templateCopy);
-
-				// templateCopy.handleForward(0.3);
-
-			}
-			// }
-			handler.frameProcessing = false;
-		}
-	}
-
-	private void whatGesture(Frame frame, ILeapTemplate templateCopy) {
-		// TODO Auto-generated method stub
-		// moved to thread
-	}
-
-}
+// class LeapListener extends Listener {
+//
+// LeapMotionHandler handler = null;
+//
+// public LeapListener(LeapMotionHandler handler) {
+// this.handler = handler;
+// }
+//
+// public void onConnect(Controller controller) {
+// System.out.println("Connected");
+// }
+//
+// public void onDisconnect(Controller controller) {
+// System.out.println("Leap motion Disconnected");
+//
+// if (Control.data.isFlying()) {
+// Commands.landing();
+// Control.data.setFlying(false);
+// Control.out
+// .println("Lost Connection to LeapMotionController. Landing invoked!");
+//
+// }
+// }
+//
+// public void onExit(Controller controller) {
+// System.out.println("Exited");
+// }
+//
+// public void onInit(Controller controller) {
+// System.out.println("Initialized");
+// handler.setWaiting(false);
+// }
+//
+// public void onFrame(Controller controller) {
+//
+// if (!handler.frameProcessing) { // skip frames as long as another is
+// // being processed
+// handler.frameProcessing = true;
+// // if (!handler.isWaiting()) {
+// if (controller.isConnected()) {
+// Frame frame = controller.frame(); // The latest frame
+//
+// ILeapTemplate templateCopy = handler.getTemplate().copy();
+//
+// whatGesture(frame, templateCopy);
+//
+// // templateCopy.handleForward(0.3);
+//
+// }
+// // }
+// handler.frameProcessing = false;
+// }
+// }
+//
+// private void whatGesture(Frame frame, ILeapTemplate templateCopy) {
+// // TODO Auto-generated method stub
+// // moved to thread
+// }
+//
+// }

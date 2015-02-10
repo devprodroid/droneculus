@@ -17,6 +17,7 @@ public class VideoView extends JFrame implements Observer {
 	
 	private static final long 			serialVersionUID = -572341852243342361L;
 	private BufferedImage 				image;
+	private LeapImageListener			leapImageListener;
 
 	public VideoView() {
 		
@@ -30,8 +31,13 @@ public class VideoView extends JFrame implements Observer {
 	   setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 	   setVisible(false);
 	   
+	   
+	   
 	   addKeyListener(new FrameKeyListener());  	   
 	   new VideoListener().addObserver(this);
+	   leapImageListener =new LeapImageListener();
+	   leapImageListener.addObserver(this);
+	   new Thread(leapImageListener).start();
 	   
 	}
 	

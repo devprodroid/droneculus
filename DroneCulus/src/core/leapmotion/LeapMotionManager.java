@@ -4,7 +4,6 @@ import com.leapmotion.leap.Controller;
 
 import core.commands.HoverInvoker;
 import core.templates.TemplateVersions.Template;
-import de.yadrone.base.ARDrone;
 
 public class LeapMotionManager {
 	LeapMotionHandler handler = null;
