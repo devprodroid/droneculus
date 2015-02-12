@@ -21,10 +21,6 @@ public class VideoListener extends Observable {
 		Control.isDroneConnected = true;
 		
 		
-
-	
-		
-		
 		// TODO: Evaluate current configuration
 		drone = Control.drone;
 		drone.getVideoManager().addImageListener(new ImageListener() {
