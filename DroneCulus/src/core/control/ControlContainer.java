@@ -32,9 +32,12 @@ public class ControlContainer extends JPanel {
 	// Start-Button and Version-ComboBox
 	private JButton btnOK;
 	private JComboBox<String> comboBox;
+	private JComboBox<Integer> cbPrimaryWebcamId;
+	private JComboBox<Integer> cbSecondaryWebcamId;
 
 	// initialize Label
 	private JLabel initLabel;
+	private JLabel lblWebcam;
 
 	// Image for Template
 	private ImageIcon image;
@@ -51,9 +54,13 @@ public class ControlContainer extends JPanel {
 
 	// Constraints for Relative Layout
 	private RelativeConstraints comboBoxConstraints;
+	private RelativeConstraints cbPriWebcamConstraints;
+	private RelativeConstraints cbSecWebcamConstraints;
+	private RelativeConstraints lblWebcamContraints;
+
 	private RelativeConstraints buttonOKConstraints;
 	private RelativeConstraints imageConstraints;
-	private RelativeConstraints initLabelConsraints;
+	private RelativeConstraints initLabelConstraints;
 	private RelativeConstraints batteryConstraints;
 	private RelativeConstraints logCheckBoxConstraints;
 	private RelativeConstraints colorizerButtonConstraints;
@@ -67,6 +74,10 @@ public class ControlContainer extends JPanel {
 	private Binding leftofLogCheck;
 	private Binding leftofColorizerButton;
 	private Binding directlyUnderCBox;
+
+	private Binding belowSecWebcam;
+	private Binding rightofPriWebcam;
+	private Binding rightoflblWebcam;
 
 	public ControlContainer() {
 		super(new RelativeLayout());
@@ -83,13 +94,23 @@ public class ControlContainer extends JPanel {
 
 		String comboBoxList[] = TemplateVersions.templatesToString();
 
+		Integer webcamIdList[] = { 0, 1, 2, 3, 4 };
+
+		cbPrimaryWebcamId = new JComboBox<Integer>(webcamIdList);
+		cbPrimaryWebcamId.setSelectedIndex(Config.WEBCAM_PRIMARY_ID);
+
+		cbSecondaryWebcamId = new JComboBox<Integer>(webcamIdList);
+		cbSecondaryWebcamId.setSelectedIndex(Config.WEBCAM_SECONDARY_ID);
+
 		comboBox = new JComboBox<String>(comboBoxList);
-		btnOK = new JButton("Start");
+		btnOK = new JButton("Connect");
 		battery = new JProgressBar();
 		initLabel = new JLabel();
+		lblWebcam = new JLabel();
 		imageLabel = new JLabel();
 		logCheckBox = new JCheckBox("Show Log?");
 		colorizerButton = new JButton("Show Colorizer");
+		setWebcamLabel("Webcam Id:");
 		addComboBoxListener();
 	}
 
@@ -108,9 +129,12 @@ public class ControlContainer extends JPanel {
 	private void initConstraints() {
 
 		comboBoxConstraints = new RelativeConstraints();
+		cbPriWebcamConstraints = new RelativeConstraints();
+		cbSecWebcamConstraints = new RelativeConstraints();
 		buttonOKConstraints = new RelativeConstraints();
 		imageConstraints = new RelativeConstraints();
-		initLabelConsraints = new RelativeConstraints();
+		initLabelConstraints = new RelativeConstraints();
+		lblWebcamContraints = new RelativeConstraints();
 		batteryConstraints = new RelativeConstraints();
 		logCheckBoxConstraints = new RelativeConstraints();
 		colorizerButtonConstraints = new RelativeConstraints();
@@ -127,6 +151,14 @@ public class ControlContainer extends JPanel {
 		rightofCBOX = bf.rightOf(comboBox);
 		leftofLogCheck = bf.leftOf(logCheckBox);
 		directlyUnderCBox = bf.below(comboBox);
+
+		bf.below(cbPrimaryWebcamId);
+		belowSecWebcam = bf.below(cbSecondaryWebcamId);
+		rightofPriWebcam = bf.rightOf(cbPrimaryWebcamId);
+		bf.rightOf(cbSecondaryWebcamId);
+
+		rightoflblWebcam = bf.rightOf(lblWebcam);
+
 		leftofColorizerButton = bf.leftOf(colorizerButton);
 	}
 
@@ -135,15 +167,26 @@ public class ControlContainer extends JPanel {
 
 		comboBoxConstraints.addBinding(leftEdge);
 		comboBoxConstraints.addBinding(topEdge);
+
+		cbPriWebcamConstraints.addBinding(directlyUnderCBox);
+		cbPriWebcamConstraints.addBinding(rightoflblWebcam);
+		cbSecWebcamConstraints.addBinding(directlyUnderCBox);
+
+		// cbSecWebcamConstraints.addBinding(leftEdge);
+		cbSecWebcamConstraints.addBinding(rightofPriWebcam);
+
+		lblWebcamContraints.addBinding(leftEdge);
+		lblWebcamContraints.addBinding(directlyUnderCBox);
+
 		buttonOKConstraints.addBinding(rightofCBOX);
 		buttonOKConstraints.addBinding(topEdge);
 		buttonOKConstraints.addBinding(leftofColorizerButton);
 		batteryConstraints.addBinding(rightEdge);
 		batteryConstraints.addBinding(bottomEdge);
 		imageConstraints.addBinding(leftEdge);
-		imageConstraints.addBinding(directlyUnderCBox);
-		initLabelConsraints.addBinding(bottomEdge);
-		initLabelConsraints.addBinding(leftEdge);
+		imageConstraints.addBinding(belowSecWebcam);
+		initLabelConstraints.addBinding(bottomEdge);
+		initLabelConstraints.addBinding(leftEdge);
 		logCheckBoxConstraints.addBinding(topEdge);
 		logCheckBoxConstraints.addBinding(rightEdge);
 		colorizerButtonConstraints.addBinding(leftofLogCheck);
@@ -154,11 +197,14 @@ public class ControlContainer extends JPanel {
 	private void addComponents() {
 
 		add(comboBox, comboBoxConstraints);
+		add(cbPrimaryWebcamId, cbPriWebcamConstraints);
+		add(cbSecondaryWebcamId, cbSecWebcamConstraints);
+		add(lblWebcam, lblWebcamContraints);
 		add(btnOK, buttonOKConstraints);
 		add(logCheckBox, logCheckBoxConstraints);
 		add(imageLabel, imageConstraints);
 		add(battery, batteryConstraints);
-		add(initLabel, initLabelConsraints);
+		add(initLabel, initLabelConstraints);
 		add(colorizerButton, colorizerButtonConstraints);
 	}
 
@@ -184,7 +230,7 @@ public class ControlContainer extends JPanel {
 					image = new ImageIcon(getClass().getResource(
 							"/resources/Xbox-Rift-Template02.png"));
 					break;
-				case "LeapMotion": //TODO: Insert a new Image
+				case "LeapMotion": // TODO: Insert a new Image
 					image = new ImageIcon(getClass().getResource(
 							"/resources/Xbox-Rift-Template02.png"));
 					break;
@@ -201,11 +247,39 @@ public class ControlContainer extends JPanel {
 
 			}
 		});
+
+		cbPrimaryWebcamId.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		cbSecondaryWebcamId.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 	}
 
 	/** returns Version ComboBox */
 	public JComboBox<String> getComboBox() {
 		return this.comboBox;
+	}
+
+	/** returns Webcam 0 ComboBox */
+	public JComboBox<Integer> getCBPrimary() {
+		return this.cbPrimaryWebcamId;
+	}
+
+	/** returns Webcam1 ComboBox */
+	public JComboBox<Integer> getCBSecondary() {
+		return this.cbSecondaryWebcamId;
 	}
 
 	/** returns Start Button */
@@ -239,6 +313,18 @@ public class ControlContainer extends JPanel {
 	public void setInitLabel(String text, Color color) {
 		initLabel.setText(text);
 		initLabel.setForeground(color);
+	}
+	
+
+	/**
+	 * sets Text of lblWebcal to
+	 * 
+	 * @param text
+	 *            = new String of InitLabel
+	 */
+	public void setWebcamLabel(String text) {
+		lblWebcam.setText(text);
+		// initLabel.setForeground(color);
 	}
 
 	/**

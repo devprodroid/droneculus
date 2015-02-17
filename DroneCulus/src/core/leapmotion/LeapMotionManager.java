@@ -42,5 +42,10 @@ public class LeapMotionManager {
 	public void start() {
 		handler.setWaiting(false);
 	}
+	
+	public boolean isConnected(){
+		return controller.isConnected();
+		
+	}
 
 }

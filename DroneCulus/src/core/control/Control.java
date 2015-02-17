@@ -4,7 +4,6 @@ import java.io.PrintStream;
 
 import com.leapmotion.leap.Controller;
 
-import core.leapmotion.LeapMotionManager;
 import core.logging.ExceptionListener;
 import core.logging.FlightOutput;
 import core.oculusrift.OculusRiftEventManager;
@@ -52,7 +51,9 @@ public class Control {
 		new ControlManager(flightOut,leapController);
 		
 		
-		OculusRiftEventManager.addEventListener(data);
+		OculusRiftEventManager.addEventListener(data);			
+				
 		drone.getNavDataManager().addBatteryListener(data);
+
 	}
 }

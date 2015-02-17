@@ -13,8 +13,6 @@ import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 import com.leapmotion.leap.Controller;
-import com.leapmotion.leap.Leap;
-
 import core.commands.HoverInvoker;
 import core.controller.ControllerManager;
 import core.leapmotion.LeapMotionManager;
@@ -41,24 +39,24 @@ public class ControlManager {
 	// DeviceManager
 	private OculusRiftManager curORManager;
 	private ControllerManager curContManager;
-	private LeapMotionManager  curLeapManager;
+	private LeapMotionManager curLeapManager;
 
 	// holds HUDColorizer, so that it can be displayed on Buttonpress
 	private HUDColorizer colorizer;
 
 	// initializes HoverInvoker
 	private HoverInvoker hoverInvoker;
-	
-	//initialize LeapMotionController
-	private Controller leapController;
 
-	public ControlManager(FlightOutput flightOut ,Controller controller) {
+	// initialize LeapMotionController
+	public Controller leapController;
+
+	public ControlManager(FlightOutput flightOut, Controller controller) {
 
 		colorizer = new HUDColorizer();
 		hoverInvoker = new HoverInvoker();
 
 		this.flightOut = flightOut;
-		
+
 		controlView = new ControlView();
 		controlView.addStartButtonListener(new StartButtonListener());
 		controlView.addLogCheckBoxListener(new LogBoxListener());
@@ -66,18 +64,19 @@ public class ControlManager {
 
 		Control.drone.getNavDataManager().addBatteryListener(
 				new CustomBatteryListener());
-		Control.drone.start();
-		controlView.startDroneConnectionCheck();
-		
-		this.leapController=controller;
+		Control.drone.start(); // to speed up things, we start the connection a
+								// bit early
+		// controlView.startDroneConnectionCheck();
 
-		videoView = new VideoView();
-		addVideoViewExitOptions();
-	
+		this.leapController = controller;
+
+		// videoView = new VideoView(false);
+		// addVideoViewExitOptions();
+
 	}
 
 	/**
-	 * starts OculusRiftManager and ControllerManager
+	 * starts OculusRiftManager, ControllerManager and LeapMotionManager
 	 * 
 	 * @param version
 	 *            = Version to start with
@@ -133,7 +132,7 @@ public class ControlManager {
 	}
 
 	/**
-	 * starts LeapMotion Manager
+	 * starts LeapMotion Manager only if a LeapMotionTemplate is selected
 	 * 
 	 * @param version
 	 *            = Version to start with
@@ -142,12 +141,22 @@ public class ControlManager {
 	 *             found
 	 */
 	private void startLeapMotionManager(Template version) throws Exception {
-		if (curLeapManager == null) {
-			curLeapManager = new LeapMotionManager(version, hoverInvoker, leapController);
-			curLeapManager.start();
-		} else {
-			curLeapManager.switchVersion(version);
-			curLeapManager.start();
+
+		if ((version == Template.LeapMotion)
+				|| (version == Template.LeapMotionHMD)) {
+			if (curLeapManager == null) {
+				curLeapManager = new LeapMotionManager(version, hoverInvoker,
+						leapController);
+				curLeapManager.start();
+
+				if (!curLeapManager.isConnected()) {
+					onError("Leap Motion not Connected");
+				}
+
+			} else {
+				curLeapManager.switchVersion(version);
+				curLeapManager.start();
+			}
 		}
 	}
 
@@ -165,9 +174,13 @@ public class ControlManager {
 					public void actionPerformed(ActionEvent e) {
 						controlView.setVisible(true);
 						videoView.setVisible(false);
+						videoView.closeWebcams();
+
 						curORManager.stop();
 						curContManager.stop();
-						curLeapManager.stop();
+						if (curLeapManager != null)
+							curLeapManager.stop();
+
 					}
 				});
 
@@ -175,9 +188,11 @@ public class ControlManager {
 			public void windowClosing(WindowEvent e) {
 				controlView.setVisible(true);
 				videoView.setVisible(false);
+				videoView.closeWebcams();
 				curORManager.stop();
 				curContManager.stop();
-				curLeapManager.stop();
+				if (curLeapManager != null)
+					curLeapManager.stop();
 			}
 		});
 
@@ -219,15 +234,23 @@ public class ControlManager {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			try {
-				//startWithConfig(Template.LeapMotionHMD);
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			if (Control.isDroneConnected) {
+			String configString = controlView.getSelectedItem();
 
-				String configString = controlView.getSelectedItem();
+			if (!Control.isDroneConnected) {
+				// Control.drone.start();
+
+				if (videoView == null) {
+
+					boolean enableWebcam = (configString == "LeapMotion")
+							|| (configString == "LeapMotionHMD");
+
+					videoView = new VideoView(enableWebcam);
+					addVideoViewExitOptions();
+					controlView.startDroneConnectionCheck();
+				}
+
+			} else {
+
 				try {
 					switch (configString) {
 

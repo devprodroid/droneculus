@@ -1,122 +1,89 @@
 package core.video;
 
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.Observable;
 
-import com.github.sarxos.webcam.Webcam;
-import com.github.sarxos.webcam.WebcamException;
-import com.leapmotion.leap.Controller;
+import org.opencv.core.Mat;
+import org.opencv.videoio.VideoCapture;
 
 import core.control.Control;
+import core.utils.Config;
 
 /**
  * Searches for attached webcams and starts fetching images from up to 2 webcams
- * the images are fed into the videopipeline for the Occulus We are using
- * WebcamCapture by Bartosz Firyn (https://github.com/sarxos)
+ * the images are fed into the videopipeline for the Occulus. The Webcams are
+ * fetched with openCV and for better synchronization we use grab() first and
+ * then the slower retrieve() method.
  **/
 public class WebcamRunnable extends Observable implements Runnable {
 
-	private Controller leapMan;
-	private Webcam webcam0 = null;
-	private Webcam webcam1 = null;
-	private Webcam singleWebcam = null;
-	private List<Webcam> webcams = null;
 	private boolean dualVimicroCameraMode = false;
+
+	/**
+	 * Primary Webcam
+	 */
+	VideoCapture capture1 = null;
+	/**
+	 * Secondary Webcam
+	 */
+	VideoCapture capture2 = null;
 
 	public WebcamRunnable() {
 
-		try {
-			webcams = Webcam.getWebcams();
-			
-			for (Webcam webcam : webcams) {
-				System.out.format("Opening %s\n", webcam.getName());
+	}
 
-				if (webcam.getName().equalsIgnoreCase(
-						"Vimicro USB2.0 UVC PC Camera 0")) {
-					webcam0 = webcam;
-					webcam0.getLock();
-				//	webcam0.setViewSize(new java.awt.Dimension(640, 480));
-				//	webcam0.
-					
-					webcam0.open(true);
+	/**
+	 * Creates and initializes the webcams with a given framerate Enables
+	 * dualVimicroCameraMode if booth Devices are open and retrieve useable
+	 * images
+	 * 
+	 * @param framerate
+	 *            - framerate of the webcam
+	 */
+	private void initCaptureDevices(int framerate) {
+		capture1 = new VideoCapture(Config.WEBCAM_PRIMARY_ID);
+		capture1.set(5, framerate);
 
-				} else if (webcam.getName().equalsIgnoreCase(
-						"Vimicro USB2.0 UVC PC Camera 1")) {
-					webcam1 = webcam;
-					webcam1.getLock();
-					//webcam1.setViewSize(new java.awt.Dimension(640, 480));
-					webcam1.open(true);
-				}// else {
-				//	singleWebcam = webcam;
-				//	singleWebcam.setViewSize(new java.awt.Dimension(640, 480));
-				//	singleWebcam.open();
+		if (capture1.isOpened()) {
+			Control.isDroneConnected = true;
 
-				//}
-				
-				
-				if ((webcam0 != null) && (webcam1 != null)) {
-					dualVimicroCameraMode = true;
-					break;
-
-				}
+			capture2 = new VideoCapture(Config.WEBCAM_SECONDARY_ID);
+			if (capture2.isOpened() && (capture2.grab())) {
+				capture2.set(5, framerate);
+				dualVimicroCameraMode = true;
 
 			}
-			 if ((webcam0 != null) && (webcam1 != null)) {
-			 dualVimicroCameraMode = true;
-
-			 }
-
-		} catch (WebcamException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-
-		leapMan = Control.leapController;
-
-	}
-
-	// let sleep
-	private void sleep(long millis) {
-		try {
-			Thread.sleep(millis);
-		} catch (InterruptedException e) {
-			e.printStackTrace(Control.out);
-		}
-	}
-
-	static {
-		Webcam.setHandleTermSignal(true);
 	}
 
 	@Override
 	public void run() {
-		 dualVimicroCameraMode = true;
-		if (dualVimicroCameraMode) {
-			while ((webcam0.isOpen()) && (webcam1.isOpen())) {
+		initCaptureDevices(Config.WEBCAM_FRAMERATE);
+		Mat webcam_image1 = new Mat();
+		Mat webcam_image2 = new Mat();
 
-				
+		if (capture1.isOpened()) {
+			while (true) {
+				capture1.grab();
+
+				if (dualVimicroCameraMode)
+					capture2.grab();
+
+				capture1.retrieve(webcam_image1);
+				if (dualVimicroCameraMode)
+					capture2.retrieve(webcam_image2);
+
+				if (!webcam_image1.empty()) {
 					setChanged();
-
-					BufferedImage image = VideoPipe.process(webcam0.getImage(),
-							webcam1.getImage(), dualVimicroCameraMode);
+					BufferedImage image = VideoPipe.processMat(webcam_image1,
+							webcam_image2, dualVimicroCameraMode);
 
 					notifyObservers(image);
-				
+				} else {
 
+				}
 			}
-		} else
+		}
 
-			while (singleWebcam.isOpen()) {
-				setChanged();
-
-				BufferedImage image = VideoPipe.process(
-						singleWebcam.getImage(), null, dualVimicroCameraMode);
-
-				notifyObservers(image);
-
-			}
-
-		sleep(15);
 	}
 }

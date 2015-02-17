@@ -1,5 +1,7 @@
 package core.detection;
 
+
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -8,8 +10,6 @@ import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
-
-import core.video.HUDColorizer;
 
 /**
  * Experiment for FaceDetection, works but is not used ;)
@@ -20,11 +20,16 @@ public class FaceDetector {
 	private static CascadeClassifier faceDetector = 
 			new CascadeClassifier(FaceDetector.class.getResource("/resources/haarcascade_frontalface_alt.xml").toString());
 	
+	@SuppressWarnings("unused")
 	private static int 				fontFace = Core.FONT_HERSHEY_COMPLEX_SMALL;
+	@SuppressWarnings("unused")
 	private static double 			fontScale = 1;
+	@SuppressWarnings("unused")
 	private static int 				thickness = 1;
+	@SuppressWarnings("unused")
 	private static int 				lineType = Core.LINE_AA;
 	
+	@SuppressWarnings("unused")
 	private static String 			alertString = "Close Human!";
 	
 	public static void detect(Mat image) {
@@ -56,21 +61,22 @@ public class FaceDetector {
 	
 	private static void drawRectangle(Mat image, Point p1, Point p2, Point stringPoint) {
 		
-		Core.rectangle(
-        		image, 
-        		p1, 
-        		p2,
-                HUDColorizer.ALERT_HUD_COLOR);
-        
-        Core.putText(
-        		image, 
-        		alertString, 
-        		stringPoint, 
-        		fontFace, 
-        		fontScale, 
-        		HUDColorizer.ALERT_HUD_COLOR, 
-        		thickness, 
-        		lineType, 
-        		false);
+//		  rectangle(
+//        		image, 
+//        		p1, 
+//        		p2,
+//                HUDColorizer.ALERT_HUD_COLOR);
+//        
+//		
+//       // putText(
+//        		image, 
+//        		alertString, 
+//        		stringPoint, 
+//        		fontFace, 
+//        		fontScale, 
+//        		HUDColorizer.ALERT_HUD_COLOR, 
+//        		thickness, 
+//        		lineType, 
+//        		false);
 	}
 }

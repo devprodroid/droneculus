@@ -1,23 +1,13 @@
 package core.leapmotion;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.Observable;
-
-import javax.imageio.ImageIO;
-import javax.imageio.stream.FileImageOutputStream;
-
-import processing.core.PImage;
 
 import com.leapmotion.leap.Controller;
 import com.leapmotion.leap.Frame;
 import com.leapmotion.leap.Hand;
 import com.leapmotion.leap.HandList;
 import com.leapmotion.leap.Image;
-import com.leapmotion.leap.ImageList;
-import com.leapmotion.leap.Leap;
-import com.leapmotion.leap.Listener;
 
 import core.commands.Commands;
 import core.commands.HoverInvoker;
@@ -27,36 +17,69 @@ import core.templates.LeapTemplateFactory;
 import core.templates.TemplateVersions.Template;
 import core.utils.Config;
 
+/**
+ * @author robert
+ * Handler for LeapMotion Controller
+ * Analyzes the Gestures and handels the connection
+ *
+ */
 public class LeapMotionHandler extends Observable implements Runnable {
 
-	// boolean, if Controller is connected
+	 
+	/**
+	 * boolean, if Controller is connected
+	 */
 	private boolean isConnected = true;
 
-	// Template for Handling the Axis Values
+	
+	/**
+	 * Template for Handling the Axis Values
+	 */
 	private ILeapTemplate template;
 
-	// boolean if ControllerHandler is still running
+	/**
+	 * if ControllerHandler is still running
+	 */
 	private boolean running = true;
 
-	// boolean if ControllerHandler is still running
+	/**
+	 * if ControllerHandler is still running
+	 */
 	private boolean isWaiting = false;
 
+	/**
+	 * local LeapMotion Controller instance
+	 */
 	private Controller controller = null;
 
-	// boolean if new frame ready
+	/**
+	 * boolean if new frame ready
+	 */
 	public boolean frameProcessing = false;
 
+	/**
+	 * Set Version and add the Observer for hovering
+	 * 
+	 * @param version
+	 * @param hoverInv
+	 * @param controller
+	 */
 	public LeapMotionHandler(Template version, HoverInvoker hoverInv,
 			Controller controller) {
 		this.controller = controller;
 		switchVersion(version);
 		addObserver(hoverInv);
 
-		// TODO: enable image policy by demand
-		controller.setPolicy(Controller.PolicyFlag.POLICY_IMAGES);
+		// enable image policy by demand
+		// controller.setPolicy(Controller.PolicyFlag.POLICY_IMAGES);
 
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
 		Control.out.println("LeapMotion running...");
@@ -80,12 +103,6 @@ public class LeapMotionHandler extends Observable implements Runnable {
 					Frame frame = controller.frame(); // The latest frame
 
 					whatGesture(frame, templateCopy);
-					// try {
-					// // getImage(frame);
-					// } catch (Exception e) {
-					// // TODO Auto-generated catch block
-					// e.printStackTrace();
-					// }
 
 				}
 
@@ -112,9 +129,15 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	}
 
-	/*
-	 * returns BufferedImage from one of the LeapMotion cameras
+	/**
+	 * Returns an image from the Leapmotions camera deactivated because the
+	 * image is unusable for flying the drone
+	 * 
+	 * @param frame
+	 * @return
+	 * @throws Exception
 	 */
+	@SuppressWarnings("unused")
 	private BufferedImage getImage(Frame frame) throws Exception {
 
 		int r = 0;
@@ -151,9 +174,6 @@ public class LeapMotionHandler extends Observable implements Runnable {
 					}
 				}
 				return bufferedImage;
-				// File f = new File("c:/MyFile.png");
-				// ImageIO.write(bufferedImage, "PNG", f);
-				// System.out.println("image saved");
 
 			}
 
@@ -163,7 +183,12 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		return null;
 	}
 
-	// let sleep
+	/**
+	 * pauses the thread for a given time
+	 * 
+	 * @param millis
+	 *            time in Milliseconds
+	 */
 	private void sleep(long millis) {
 		try {
 			Thread.sleep(millis);
@@ -172,6 +197,14 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		}
 	}
 
+	/**
+	 * Determines the gesture recognized by the LeapMotion in a Frame
+	 * 
+	 * @param frame
+	 *            the Frame to analyze
+	 * @param templateCopy
+	 *            template for executing the action
+	 */
 	public void whatGesture(Frame frame, ILeapTemplate templateCopy) {
 
 		HandList hands = frame.hands();
@@ -200,7 +233,8 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	}
 
 	/**
-	 * switch used Template
+	 * Switch used template and set the LeapMotion POLICY_OPTIMIZE_HMD if HMD
+	 * Template is selected
 	 * 
 	 * @param version
 	 *            = Version of Template to be used
@@ -245,64 +279,3 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	}
 
 }
-
-// class LeapListener extends Listener {
-//
-// LeapMotionHandler handler = null;
-//
-// public LeapListener(LeapMotionHandler handler) {
-// this.handler = handler;
-// }
-//
-// public void onConnect(Controller controller) {
-// System.out.println("Connected");
-// }
-//
-// public void onDisconnect(Controller controller) {
-// System.out.println("Leap motion Disconnected");
-//
-// if (Control.data.isFlying()) {
-// Commands.landing();
-// Control.data.setFlying(false);
-// Control.out
-// .println("Lost Connection to LeapMotionController. Landing invoked!");
-//
-// }
-// }
-//
-// public void onExit(Controller controller) {
-// System.out.println("Exited");
-// }
-//
-// public void onInit(Controller controller) {
-// System.out.println("Initialized");
-// handler.setWaiting(false);
-// }
-//
-// public void onFrame(Controller controller) {
-//
-// if (!handler.frameProcessing) { // skip frames as long as another is
-// // being processed
-// handler.frameProcessing = true;
-// // if (!handler.isWaiting()) {
-// if (controller.isConnected()) {
-// Frame frame = controller.frame(); // The latest frame
-//
-// ILeapTemplate templateCopy = handler.getTemplate().copy();
-//
-// whatGesture(frame, templateCopy);
-//
-// // templateCopy.handleForward(0.3);
-//
-// }
-// // }
-// handler.frameProcessing = false;
-// }
-// }
-//
-// private void whatGesture(Frame frame, ILeapTemplate templateCopy) {
-// // TODO Auto-generated method stub
-// // moved to thread
-// }
-//
-// }

@@ -24,5 +24,20 @@ public class Config {
 	 */
 	public static int BATTERY_ALERT_VALUE = 20;		
 	
+	/**
+	 * Framerate for initializing the Webcamera
+	 */
+	public static int WEBCAM_FRAMERATE = 30;		
+	
+	/**
+	 * Id for the left/primary webcam, 
+	 */
+	public static  int WEBCAM_PRIMARY_ID = 0;
+	
+	/**
+	 * Id for the right/secondary webcam, 
+	 */
+	public static int WEBCAM_SECONDARY_ID = 1;
+	
 	
 }
