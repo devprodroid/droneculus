@@ -13,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 import com.leapmotion.leap.Controller;
+
 import core.commands.HoverInvoker;
 import core.controller.ControllerManager;
 import core.leapmotion.LeapMotionManager;
@@ -48,10 +49,10 @@ public class ControlManager {
 	private HoverInvoker hoverInvoker;
 
 	// initialize LeapMotionController
-	public Controller leapController;
+	private Controller leapController;
 
 	public ControlManager(FlightOutput flightOut, Controller controller) {
-
+		this.leapController = controller;
 		colorizer = new HUDColorizer();
 		hoverInvoker = new HoverInvoker();
 
@@ -66,12 +67,6 @@ public class ControlManager {
 				new CustomBatteryListener());
 		Control.drone.start(); // to speed up things, we start the connection a
 								// bit early
-		// controlView.startDroneConnectionCheck();
-
-		this.leapController = controller;
-
-		// videoView = new VideoView(false);
-		// addVideoViewExitOptions();
 
 	}
 
@@ -144,9 +139,11 @@ public class ControlManager {
 
 		if ((version == Template.LeapMotion)
 				|| (version == Template.LeapMotionHMD)) {
+
 			if (curLeapManager == null) {
 				curLeapManager = new LeapMotionManager(version, hoverInvoker,
 						leapController);
+				curLeapManager.switchVersion(version);
 				curLeapManager.start();
 
 				if (!curLeapManager.isConnected()) {
@@ -158,6 +155,7 @@ public class ControlManager {
 				curLeapManager.start();
 			}
 		}
+
 	}
 
 	/**
@@ -309,6 +307,7 @@ public class ControlManager {
 		@Override
 		public void batteryLevelChanged(int arg0) {
 			controlView.setBatteryTo(arg0);
+
 		}
 
 		@Override

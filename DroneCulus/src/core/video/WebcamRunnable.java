@@ -3,6 +3,8 @@ package core.video;
 import java.awt.image.BufferedImage;
 import java.util.Observable;
 
+import javax.xml.crypto.Data;
+
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 
@@ -45,6 +47,7 @@ public class WebcamRunnable extends Observable implements Runnable {
 		capture1.set(5, framerate);
 
 		if (capture1.isOpened()) {
+			if (Control.data.getBatteryPercentage()>0)
 			Control.isDroneConnected = true;
 
 			capture2 = new VideoCapture(Config.WEBCAM_SECONDARY_ID);

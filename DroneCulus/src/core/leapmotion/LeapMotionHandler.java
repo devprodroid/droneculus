@@ -18,20 +18,17 @@ import core.templates.TemplateVersions.Template;
 import core.utils.Config;
 
 /**
- * @author robert
- * Handler for LeapMotion Controller
- * Analyzes the Gestures and handels the connection
+ * @author robert Handler for LeapMotion Controller Analyzes the Gestures and
+ *         handels the connection
  *
  */
 public class LeapMotionHandler extends Observable implements Runnable {
 
-	 
 	/**
 	 * boolean, if Controller is connected
 	 */
 	private boolean isConnected = true;
 
-	
 	/**
 	 * Template for Handling the Axis Values
 	 */
@@ -67,12 +64,9 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	public LeapMotionHandler(Template version, HoverInvoker hoverInv,
 			Controller controller) {
 		this.controller = controller;
+		
 		switchVersion(version);
 		addObserver(hoverInv);
-
-		// enable image policy by demand
-		// controller.setPolicy(Controller.PolicyFlag.POLICY_IMAGES);
-
 	}
 
 	/*
@@ -86,12 +80,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 		// when running = false ControllerHandler will be shut down
 		while (running) {
-
-			// when waiting = true ControllerHandler is still running,
-			// but should not react
 			if (!isWaiting) {
-
-				// only when the Controller is connected, input can be handled
 				if (isConnected) {
 
 					ILeapTemplate templateCopy = template.copy();
@@ -102,7 +91,11 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 					Frame frame = controller.frame(); // The latest frame
 
-					whatGesture(frame, templateCopy);
+					if (frame.isValid()) {
+						whatGesture(frame, templateCopy);
+					} else {
+						System.out.println("Invalid Frame");
+					}
 
 				}
 
@@ -129,59 +122,6 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	}
 
-	/**
-	 * Returns an image from the Leapmotions camera deactivated because the
-	 * image is unusable for flying the drone
-	 * 
-	 * @param frame
-	 * @return
-	 * @throws Exception
-	 */
-	@SuppressWarnings("unused")
-	private BufferedImage getImage(Frame frame) throws Exception {
-
-		int r = 0;
-		int g = 0;
-		int b = 0;
-		if (frame.isValid()) {
-			if (frame.images().count() > 0) {
-				// get Image from camera #0
-				Image image = frame.images().get(0);
-
-				BufferedImage bufferedImage = new BufferedImage(image.width(),
-						image.height(), BufferedImage.TYPE_INT_RGB);
-
-				// Get byte array containing the image data from Image object
-				// Width*height*colordepth
-				byte[] imageData = image.data();
-
-				int i = 0;
-
-				for (int j = 0; j < image.height(); j++) {// spalte
-					for (int k = 0; k < image.width(); k++) {// zeile
-
-						// convert pixel to unsigned and shift into place
-						r = (imageData[i] & 0xFF) << 16;
-						g = (imageData[i] & 0xFF) << 8;
-						b = (imageData[i] & 0xFF);
-
-						int col = r | b | g;
-
-						// set pixel at k,j to pixelcolor
-						bufferedImage.setRGB(k, j, col);
-
-						i++;
-					}
-				}
-				return bufferedImage;
-
-			}
-
-		} else {
-			throw new Exception("Invalid Frame");
-		}
-		return null;
-	}
 
 	/**
 	 * pauses the thread for a given time
