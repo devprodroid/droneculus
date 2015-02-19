@@ -127,6 +127,7 @@ public class ControllerHandler extends Observable implements Runnable {
 						sleep(Config.MILLIS_FOR_EVENTMANAGER);
 						//hover only if not controlled by LeapMotion
 						//TODO: ask for leap control
+					
 						notifyObservers(true);
 					}
 					

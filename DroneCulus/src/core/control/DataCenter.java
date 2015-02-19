@@ -55,6 +55,12 @@ public class DataCenter implements IOculusRiftListener, BatteryListener {
 	// UserSelected webcam id
 	private int primaryWebcamId;
 	private int secondaryWebcamId;
+	
+	private String direction="hover";
+	private String finger;
+	
+	
+	
 
 	public int getPrimaryWebcamId() {
 		return primaryWebcamId;
@@ -376,5 +382,21 @@ public class DataCenter implements IOculusRiftListener, BatteryListener {
 		}
 
 		return uniqueInstance;
+	}
+
+	public String getDirection() {
+		return direction;
+	}
+
+	public void setDirection(String direction) {
+		this.direction = direction;
+	}
+
+	public String getFinger() {
+		return finger;
+	}
+
+	public void setFinger(String finger) {
+		this.finger = finger;
 	}
 }

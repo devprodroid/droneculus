@@ -127,7 +127,8 @@ public class Commands {
 	public static synchronized void hover() {
 		hovering = true;
 		cmd.hover().doFor(30);
-
+		
+		Control.data.setDirection("Hover");
 	}
 
 	/**
@@ -171,9 +172,12 @@ public class Commands {
 
 		if (hovering) {
 			hoveringString(text, diff, speed);
+
 		} else {
 			notHoveringString(text, diff, speed);
+
 		}
+		Control.data.setDirection(text);
 		hovering = false;
 		Control.out.println(sb.toString());
 		sb = new StringBuilder();

@@ -12,15 +12,15 @@ public class LeapTemplate01 implements ILeapTemplate {
 	@Override
 	public void handleForward(double magnitude) {
 		int speed = (int) (magnitude * Control.data.getSpeed());
-		Commands.spinLeft(speed);
-		//Commands.forward(speed);
+		//Commands.spinLeft(speed);
+		 Commands.forward(speed);
 	}
 
 	@Override
 	public void handleBackward(double magnitude) {
 		int speed = (int) (magnitude * Control.data.getSpeed());
-		Commands.spinRight(speed);
-		//Commands.backward(speed);
+		//Commands.spinRight(speed);
+		 Commands.backward(speed);
 	}
 
 	@Override
@@ -45,6 +45,20 @@ public class LeapTemplate01 implements ILeapTemplate {
 	public void handleDown(double magnitude) {
 		int speed = (int) (magnitude * Control.data.getSpeed());
 		Commands.goDown(speed);
+	}
+
+	@Override
+	public void handleStart() {
+		if (!Control.data.isFlying()) {
+			Commands.takeOff();
+
+			Control.data.setFlying(true);
+			Commands.hover();
+		} else {
+			//Commands.landing();
+
+			//Control.data.setFlying(false);
+		}
 	}
 
 	@Override

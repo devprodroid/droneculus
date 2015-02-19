@@ -29,19 +29,21 @@ public class VideoPipe {
 	// Stringbuilder for HUD-Strings
 	private static StringBuilder speedBuilder = new StringBuilder("Speed: ");
 	private static StringBuilder batteryBuilder = new StringBuilder();
+	private static StringBuilder directionBuilder = new StringBuilder();
+	private static StringBuilder fingerBuilder = new StringBuilder();
 
 	/**
-	 * Method for processing Images, is called from VideoListener and
-	 * processes every Image on imageUpdated. Takes care of Generating an
-	 * OpenCV-Mat and calls processMat.
+	 * Method for processing Images, is called from VideoListener and processes
+	 * every Image on imageUpdated. Takes care of Generating an OpenCV-Mat and
+	 * calls processMat.
 	 * 
 	 * @param image0
-	 *            left Camera Image = BufferedImage 
-	 * @param     image1 right Camera Image = BufferedImage
+	 *            left Camera Image = BufferedImage
+	 * @param image1
+	 *            right Camera Image = BufferedImage
 	 * @return = BufferedImage
 	 */
-	public static BufferedImage process(BufferedImage image0,
-			BufferedImage image1, Boolean dualCamera) {
+	public static BufferedImage process(BufferedImage image0, BufferedImage image1, Boolean dualCamera) {
 
 		// generate Mat from BufferedImages
 		Mat imageMat0 = ImgUtil.makeMat(image0);
@@ -51,21 +53,23 @@ public class VideoPipe {
 			imageMat1 = ImgUtil.makeMat(image1);
 		}
 
-		return processMat( imageMat0, imageMat1,dualCamera);
+		return processMat(imageMat0, imageMat1, dualCamera);
 	}
 
-	/** 
+	/**
 	 * Main Method for processing Images, is called from VideoListener and
 	 * processes every Image on imageUpdated. Takes care of processing the image
 	 * and transforming back to BufferdImage.
-	 * @param imageMat0 = Mat - left Camera Image
-	 * @param imageMat1 = Mat - right Camera Image
+	 * 
+	 * @param imageMat0
+	 *            = Mat - left Camera Image
+	 * @param imageMat1
+	 *            = Mat - right Camera Image
 	 * @param dualCamera
 	 * 
 	 * @return
 	 */
-	public static BufferedImage processMat( Mat imageMat0,
-			Mat imageMat1,Boolean dualCamera) {
+	public static BufferedImage processMat(Mat imageMat0, Mat imageMat1, Boolean dualCamera) {
 		// initial calculation or calculation of maps when a Coefficient has
 		// changed (FrameKeyListener can change those)
 		if (data.isRemapRecalculationWanted()) {
@@ -92,20 +96,19 @@ public class VideoPipe {
 		}
 
 		Mat combinedImage = null;
+		Mat imageL = null;
+		Mat imageR = null;
+
+		// Shifting Image closer together to fix Parallax-Error
+		imageL = ImgUtil.shiftFrame(imageMat0, data.getShift(), Direction.ShiftRight);
 		// single camera mode - duplicate image
 		if (!dualCamera) {
-			// Shifting Image closer together to fix Parallax-Error
-			Mat imageL = ImgUtil.shiftFrame(imageMat0, data.getShift(),
-					Direction.ShiftRight);
-
-			Mat imageR = ImgUtil.shiftFrame(imageMat0, data.getShift(),
-					Direction.ShiftLeft);
-
-			combinedImage = ImgUtil.makeOne(imageL, imageR);
+			imageR = ImgUtil.shiftFrame(imageMat0, data.getShift(), Direction.ShiftLeft);
 		} else // dual camera mode - combine the image of two cameras
 		{
-			combinedImage = ImgUtil.makeOne(imageMat0, imageMat1);
+			imageR = ImgUtil.shiftFrame(imageMat1, data.getShift(), Direction.ShiftLeft);
 		}
+		combinedImage = ImgUtil.makeOne(imageL, imageR);
 
 		// make BufferedImage and return it
 		return ImgUtil.makeBufferedImage(combinedImage);
@@ -155,6 +158,8 @@ public class VideoPipe {
 		String info = data.getInfo();
 		String batteryString = batteryBuilder.toString();
 
+		String direction = data.getDirection();
+
 		int w = imageMat.width();
 		int h = imageMat.height();
 
@@ -165,22 +170,21 @@ public class VideoPipe {
 		else
 			batteryColor = HUDColorizer.ALERT_HUD_COLOR;
 
-		Size sizeInfo =  Imgproc.getTextSize(info, fontFace, fontScale, thickness,
-				null);
+		Size sizeInfo = Imgproc.getTextSize(info, fontFace, fontScale, thickness, null);
+
+		Size sizeBat = Imgproc.getTextSize(batteryString, fontFace, fontScale, thickness, null);
 		
-		
-		Size sizeBat = Imgproc.getTextSize(batteryString, fontFace, fontScale,
-				thickness, null);
+		Size sizeDirection = Imgproc.getTextSize(direction, fontFace, fontScale, thickness, null);
 
 		int widthBat = (int) sizeBat.width + 5;
 		int halfWidth = (int) (sizeInfo.width / 2);
+		int widthDir = (int) sizeDirection.width + 5;
+		
 
-		put(imageMat, batteryString, new Point((w / 2) - widthBat, h - 5),
-				batteryColor);
-		put(imageMat, speedBuilder.toString(), new Point((w / 2) + 5, h - 5),
-				HUDColorizer.NORMAL_HUD_COLOR);
-		put(imageMat, info, new Point((w / 2) - halfWidth, 60),
-				HUDColorizer.NORMAL_HUD_COLOR);
+		put(imageMat, direction, new Point((w / 2) - widthDir, h - 20),  HUDColorizer.NORMAL_HUD_COLOR);
+		put(imageMat, batteryString, new Point((w / 2) - widthBat, h - 5), batteryColor);
+		put(imageMat, speedBuilder.toString(), new Point((w / 2) + 5, h - 5), HUDColorizer.NORMAL_HUD_COLOR);
+		put(imageMat, info, new Point((w / 2) - halfWidth, 60), HUDColorizer.NORMAL_HUD_COLOR);
 
 		// TODO: remove HardCoded Length for String "Speed: "
 		speedBuilder.setLength(7);
@@ -203,8 +207,7 @@ public class VideoPipe {
 	 */
 	private static void put(Mat image, String text, Point point, Scalar Color) {
 
-		Imgproc.putText(image, text, point, fontFace, fontScale, Color, thickness,
-				lineType, false);
+		Imgproc.putText(image, text, point, fontFace, fontScale, Color, thickness, lineType, false);
 	}
 
 	/**
@@ -246,8 +249,7 @@ public class VideoPipe {
 	 * @param lineLength
 	 *            = length of the line which is drawn to display rotation
 	 */
-	private static void drawCenterWithRollAt(Mat imageMat, Point center,
-			int circleRadius, int lineLength) {
+	private static void drawCenterWithRollAt(Mat imageMat, Point center, int circleRadius, int lineLength) {
 
 		double roll = data.getCurRoll();
 		double radians = Math.toRadians(roll);
@@ -262,10 +264,8 @@ public class VideoPipe {
 		u = (int) (Math.cos(radians) * r);
 		Point rollInnerPoint = new Point(center.x + v, center.y - u);
 
-		Imgproc.line(imageMat, rollInnerPoint, rollOuterPoint,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
-		Imgproc.circle(imageMat, center, circleRadius,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, rollInnerPoint, rollOuterPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.circle(imageMat, center, circleRadius, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
 
 	}
 
@@ -285,8 +285,7 @@ public class VideoPipe {
 	 *            HorizonCircle
 	 */
 	@SuppressWarnings("unused")
-	private static void drawHorizonWithRollAt(Mat imageMat, Point center,
-			int circleRadius, int lineLength) {
+	private static void drawHorizonWithRollAt(Mat imageMat, Point center, int circleRadius, int lineLength) {
 
 		double roll = data.getCurRoll();
 		double radians = Math.toRadians(roll);
@@ -303,12 +302,9 @@ public class VideoPipe {
 		Point leftInnerPoint = new Point(center.x + u, center.y - v);
 		Point rightInnerPoint = new Point(center.x + u, center.y - v);
 
-		Imgproc.line(imageMat, leftInnerPoint, leftOuterPoint,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
-		Imgproc.line(imageMat, rightInnerPoint, rightOuterPoint,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
-		Imgproc.circle(imageMat, center, circleRadius,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, leftInnerPoint, leftOuterPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, rightInnerPoint, rightOuterPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.circle(imageMat, center, circleRadius, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
 	}
 
 	/**
@@ -321,8 +317,7 @@ public class VideoPipe {
 	 * @param circleRadius
 	 *            = Radius of HorizonCircle
 	 */
-	private static void drawHorizonAt(Mat imageMat, Point center,
-			int circleRadius) {
+	private static void drawHorizonAt(Mat imageMat, Point center, int circleRadius) {
 
 		Point left = new Point(center.x - 20, center.y);
 		Point leftCircle = new Point(center.x - circleRadius, center.y);
@@ -334,16 +329,11 @@ public class VideoPipe {
 		Point down = new Point(center.x, center.y + circleRadius + 2);
 		Point downCircle = new Point(center.x, center.y + circleRadius);
 
-		Imgproc.line(imageMat, downCircle, down, HUDColorizer.NORMAL_HUD_COLOR, 1,
-				Core.LINE_AA, 0);
-		Imgproc.line(imageMat, upCircle, up, HUDColorizer.NORMAL_HUD_COLOR, 1,
-				Core.LINE_AA, 0);
-		Imgproc.line(imageMat, left, leftCircle, HUDColorizer.NORMAL_HUD_COLOR, 1,
-				Core.LINE_AA, 0);
-		Imgproc.line(imageMat, right, rightCircle, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
-		Imgproc.circle(imageMat, center, circleRadius,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, downCircle, down, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, upCircle, up, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, left, leftCircle, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, right, rightCircle, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.circle(imageMat, center, circleRadius, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
 	}
 
 	/**
@@ -374,29 +364,23 @@ public class VideoPipe {
 			leftPoint = new Point(w / 2 - roll, h / 2 - roll);
 		}
 
-		Imgproc.line(imageMat, center, rightPoint, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
-		Imgproc.line(imageMat, center, leftPoint, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, center, rightPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, center, leftPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
 
 		rightPoint = new Point(w / 2 + pitch, h / 2);
 		leftPoint = new Point(w / 2 - pitch, h / 2);
 
-		Imgproc.line(imageMat, center, rightPoint, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
-		Imgproc.line(imageMat, center, leftPoint, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, center, rightPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, center, leftPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
 
 		rightPoint = new Point(w / 2, h / 2 + yaw);
 		leftPoint = new Point(w / 2, h / 2 - yaw);
 
-		Imgproc.line(imageMat, center, rightPoint, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
-		Imgproc.line(imageMat, center, leftPoint, HUDColorizer.NORMAL_HUD_COLOR,
-				1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, center, rightPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.line(imageMat, center, leftPoint, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
 
-		Imgproc.circle(imageMat, center, Config.OFFSET_FOR_RIFT_ACTION,
-				HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA, 0);
+		Imgproc.circle(imageMat, center, Config.OFFSET_FOR_RIFT_ACTION, HUDColorizer.NORMAL_HUD_COLOR, 1, Core.LINE_AA,
+				0);
 
 	}
 }

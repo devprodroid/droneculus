@@ -1,13 +1,10 @@
 package core.leapmotion;
 
-import java.awt.image.BufferedImage;
 import java.util.Observable;
 
-import com.leapmotion.leap.Controller;
-import com.leapmotion.leap.Frame;
-import com.leapmotion.leap.Hand;
-import com.leapmotion.leap.HandList;
-import com.leapmotion.leap.Image;
+import org.jfree.data.time.Millisecond;
+
+import com.leapmotion.leap.*;
 
 import core.commands.Commands;
 import core.commands.HoverInvoker;
@@ -55,16 +52,21 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	public boolean frameProcessing = false;
 
 	/**
+	 * Circle Gesture active
+	 */
+	boolean Circle = false;
+
+	/**
 	 * Set Version and add the Observer for hovering
 	 * 
 	 * @param version
 	 * @param hoverInv
 	 * @param controller
 	 */
-	public LeapMotionHandler(Template version, HoverInvoker hoverInv,
-			Controller controller) {
+	public LeapMotionHandler(Template version, HoverInvoker hoverInv, Controller controller) {
 		this.controller = controller;
-		
+		this.controller.enableGesture(Gesture.Type.TYPE_CIRCLE);
+
 		switchVersion(version);
 		addObserver(hoverInv);
 	}
@@ -79,49 +81,28 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		Control.out.println("LeapMotion running...");
 
 		// when running = false ControllerHandler will be shut down
-		while (running) {
-			if (!isWaiting) {
-				if (isConnected) {
+		while ((running) && (!isWaiting)) {
 
-					ILeapTemplate templateCopy = template.copy();
+			if (isConnected) {
+				setChanged();
+				if (!analyseFrame(controller.frame())) {
 
-					setChanged();
-					if (true) {
-					}
-
-					Frame frame = controller.frame(); // The latest frame
-
-					if (frame.isValid()) {
-						whatGesture(frame, templateCopy);
-					} else {
-						System.out.println("Invalid Frame");
-					}
-
-				}
-
-				// else sleep a moment and notify HoverInvoker, that
-				// Controller wants to hover
-				else {
-					sleep(Config.MILLIS_FOR_EVENTMANAGER);
+					sleep(Config.MILLIS_FOR_COMMANDS);
 					notifyObservers(true);
-				}
-
-				// if the Controller is not connected, the Drone needs to
-				// land, so that nothing
-				// unexpected happens
+				} else
+					notifyObservers(false);
 			} else {
 				if (Control.data.isFlying()) {
 					Commands.landing();
 					Control.data.setFlying(false);
-					Control.out
-							.println("Lost Connection to Leap Motion Controller. Landing invoked!");
+					Control.out.println("Lost Connection to Leap Motion Controller. Landing invoked!");
 					sleep(200);
+
 				}
 			}
+			// sleep(Config.MILLIS_FOR_COMMANDS);
 		}
-
 	}
-
 
 	/**
 	 * pauses the thread for a given time
@@ -145,31 +126,121 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	 * @param templateCopy
 	 *            template for executing the action
 	 */
-	public void whatGesture(Frame frame, ILeapTemplate templateCopy) {
+	public boolean analyseFrame(Frame frame) {
 
 		HandList hands = frame.hands();
-		Hand leftHand = hands.leftmost();
-		Hand rightHand = hands.rightmost();
-		// System.out.println("X:"+rightHand.palmPosition().getX()+"Y:"+rightHand.palmPosition().getY()+"Z:"+rightHand.palmPosition().getZ());
-		setChanged();
-		if (rightHand.isValid() && leftHand.isValid()) {
-			if (leftHand.palmPosition().getZ() < -85
-					&& rightHand.palmPosition().getZ() < -85) {
-				// Move Forward
-				templateCopy.handleForward(2);
+		Hand firstHand = hands.get(0);
 
-				System.out.println("FORWARD");
+		if (parseGesture(frame)) {
+			return true;
+		} else if (parseFingers(firstHand)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
-			} else if (leftHand.palmPosition().getZ() > 50
-					&& rightHand.palmPosition().getZ() > 50) {
-				// Move Backwards
-				templateCopy.handleBackward(2);
-				System.out.println("BACKWARD");
-			} else {
-				// System.out.println("STOP");
-				notifyObservers(true); // hover!
+	/**
+	 * Tries to find extended index fingers and react on commands
+	 * 
+	 * @param firstHand
+	 */
+	private boolean parseFingers(Hand firstHand) {
+		// FingerList indexFingerList =
+		// firstHand.fingers().fingerType(Finger.Type.TYPE_INDEX);
+		// Finger indexFinger = indexFingerList.get(0);
+
+		FingerList thumbFingerList = firstHand.fingers().fingerType(Finger.Type.TYPE_THUMB);
+		Finger thumb = thumbFingerList.get(0);
+		boolean result = false;
+
+		// if (indexFinger.isExtended() && (!thumb.isExtended())) {
+		// if (indexFinger.stabilizedTipPosition().getZ() < -50) {
+		// // Move Forward
+		// template.copy().handleForward(1);
+		// result = true;
+		//
+		// } else if (indexFinger.stabilizedTipPosition().getZ() > 50) {
+		// // Move Backwards
+		// template.copy().handleBackward(1);
+		// result = true;
+		// }
+		//
+		// } else
+		if (thumb.isExtended()) {
+
+			float confidence = firstHand.confidence();
+			if (confidence > 0.7) {
+
+				float roll = firstHand.palmNormal().roll();
+				float pitch = firstHand.palmNormal().pitch();
+
+				double rollDeg = Math.toDegrees(roll);
+				double pitchDeg = Math.toDegrees(pitch);
+
+				System.out.println("rollDeg " + rollDeg);
+				System.out.println("Pitchdeg " + pitchDeg);
+				if (pitchDeg > -65) {
+					template.copy().handleBackward(0.5 + (Math.abs(pitchDeg / 100)));
+					result = true;
+				}
+				if (pitchDeg < -110) {
+					template.copy().handleForward(0.5 + (Math.abs(pitchDeg / 100)));
+					result = true;
+
+				}
+
+				if (rollDeg < -20) {
+					template.copy().handleRight(0.5 + (Math.abs(rollDeg / 100)));
+					result = true;
+				}
+				if (rollDeg > 20) {
+					template.copy().handleLeft(0.5 + (Math.abs(rollDeg / 100)));
+					result = true;
+				}
+				// if (thumb.stabilizedTipPosition().getX() < -50) {
+				// // Move left
+				// template.copy().handleLeft(1);
+				// result = true;
+				//
+				// } else if (indexFinger.stabilizedTipPosition().getX() > 50) {
+				// // Move right
+				// template.copy().handleRight(1);
+
 			}
 		}
+
+		return result;
+	}
+
+	/**
+	 * Tries to recognize gestures Finger Circle for takeof
+	 * 
+	 * @param frame
+	 */
+	private boolean parseGesture(Frame frame) {
+
+		if (frame.gestures().count() == 0) {
+			return false;
+		}
+
+		if ((!Control.data.isFlying()) && (frame.gestures().get(0).type() == Gesture.Type.TYPE_CIRCLE && !Circle)) {
+
+			Circle = true;
+			CircleGesture circle = new CircleGesture(frame.gestures().get(0));
+			float progress = circle.progress();
+
+			if (progress > 2.0f) {
+				template.copy().handleStart();
+				Circle = false;
+			}
+
+		} else {
+			Circle = false;
+
+		}
+		return Circle;
+
 	}
 
 	/**

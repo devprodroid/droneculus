@@ -20,4 +20,6 @@ public interface ILeapTemplate {
 	
 
 	public ILeapTemplate copy();
+
+	public void handleStart();
 }

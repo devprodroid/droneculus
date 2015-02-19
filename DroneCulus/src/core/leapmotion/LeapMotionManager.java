@@ -9,22 +9,29 @@ public class LeapMotionManager {
 	LeapMotionHandler handler = null;
 	Controller controller = null;
 
-	
 	// listener etc
 
 	public Controller getController() {
 		return controller;
 	}
 
-	public LeapMotionManager(Template version, HoverInvoker hoverInv,Controller controller)
-			throws Exception {
+	/**
+	 * Creates a LeapMotion Manager and tries to connect to the device
+	 * @param version Version to start
+	 * @param hoverInv Observer for Hovering
+	 * @param controller Leap Motion Controller
+	 * @throws Exception If Connect fails, exception is thrown
+	 */
+	public LeapMotionManager(Template version, HoverInvoker hoverInv, Controller controller) throws Exception {
 
 		this.controller = controller;
-		
+
 		handler = new LeapMotionHandler(version, hoverInv, controller);
+		if (!controller.isConnected())
+			throw new NullPointerException("No LeapMotion Controller found!");
 		initController();
-		
-		}
+
+	}
 
 	private void initController() {
 
@@ -42,10 +49,10 @@ public class LeapMotionManager {
 	public void start() {
 		handler.setWaiting(false);
 	}
-	
-	public boolean isConnected(){
+
+	public boolean isConnected() {
 		return controller.isConnected();
-		
+
 	}
 
 }

@@ -63,8 +63,7 @@ public class ControlManager {
 		controlView.addLogCheckBoxListener(new LogBoxListener());
 		controlView.addColorizerButtonListener(new ColorizerListener());
 
-		Control.drone.getNavDataManager().addBatteryListener(
-				new CustomBatteryListener());
+		Control.drone.getNavDataManager().addBatteryListener(new CustomBatteryListener());
 		Control.drone.start(); // to speed up things, we start the connection a
 								// bit early
 
@@ -137,18 +136,17 @@ public class ControlManager {
 	 */
 	private void startLeapMotionManager(Template version) throws Exception {
 
-		if ((version == Template.LeapMotion)
-				|| (version == Template.LeapMotionHMD)) {
+		if ((version == Template.LeapMotion) || (version == Template.LeapMotionHMD)) {
 
 			if (curLeapManager == null) {
-				curLeapManager = new LeapMotionManager(version, hoverInvoker,
-						leapController);
+				curLeapManager = new LeapMotionManager(version, hoverInvoker, leapController);
 				curLeapManager.switchVersion(version);
 				curLeapManager.start();
 
-				if (!curLeapManager.isConnected()) {
-					onError("Leap Motion not Connected");
-				}
+				// if (!curLeapManager.isConnected()) {
+
+				// onError("Leap Motion not Connected");
+				// }
 
 			} else {
 				curLeapManager.switchVersion(version);
@@ -165,22 +163,21 @@ public class ControlManager {
 
 		videoView.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
 				.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
-		videoView.getRootPane().getActionMap()
-				.put("Cancel", new AbstractAction() {
-					private static final long serialVersionUID = 8762923978776186290L;
+		videoView.getRootPane().getActionMap().put("Cancel", new AbstractAction() {
+			private static final long serialVersionUID = 8762923978776186290L;
 
-					public void actionPerformed(ActionEvent e) {
-						controlView.setVisible(true);
-						videoView.setVisible(false);
-						videoView.closeWebcams();
+			public void actionPerformed(ActionEvent e) {
+				controlView.setVisible(true);
+				videoView.setVisible(false);
+				videoView.closeWebcams();
 
-						curORManager.stop();
-						curContManager.stop();
-						if (curLeapManager != null)
-							curLeapManager.stop();
+				curORManager.stop();
+				curContManager.stop();
+				if (curLeapManager != null)
+					curLeapManager.stop();
 
-					}
-				});
+			}
+		});
 
 		videoView.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -218,8 +215,7 @@ public class ControlManager {
 	 * @param message
 	 */
 	private void showError(String message) {
-		JOptionPane.showMessageDialog(new JFrame(), message, "Error",
-				JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(new JFrame(), message, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 
 	/**
@@ -239,8 +235,7 @@ public class ControlManager {
 
 				if (videoView == null) {
 
-					boolean enableWebcam = (configString == "LeapMotion")
-							|| (configString == "LeapMotionHMD");
+					boolean enableWebcam = (configString == "LeapMotionHMD");
 
 					videoView = new VideoView(enableWebcam);
 					addVideoViewExitOptions();
