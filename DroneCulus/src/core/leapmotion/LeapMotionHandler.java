@@ -133,7 +133,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 		if (parseGesture(frame)) {
 			return true;
-		} else if (parseFingers(firstHand)) {
+		} else if (controlWithPalmOrientation(firstHand)) {
 			return true;
 		} else {
 			return false;
@@ -141,80 +141,78 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	}
 
 	/**
-	 * Tries to find extended index fingers and react on commands
+	 * We try to find the hands thumb and the palms orientation for controlling
+	 * forward/backward motion with pitch and roll of the hand
 	 * 
 	 * @param firstHand
+	 *            the first detected hand
 	 */
-	private boolean parseFingers(Hand firstHand) {
-		// FingerList indexFingerList =
-		// firstHand.fingers().fingerType(Finger.Type.TYPE_INDEX);
-		// Finger indexFinger = indexFingerList.get(0);
-
+	private boolean controlWithPalmOrientation(Hand firstHand) {
 		FingerList thumbFingerList = firstHand.fingers().fingerType(Finger.Type.TYPE_THUMB);
 		Finger thumb = thumbFingerList.get(0);
 		boolean result = false;
 
-		// if (indexFinger.isExtended() && (!thumb.isExtended())) {
-		// if (indexFinger.stabilizedTipPosition().getZ() < -50) {
-		// // Move Forward
-		// template.copy().handleForward(1);
-		// result = true;
-		//
-		// } else if (indexFinger.stabilizedTipPosition().getZ() > 50) {
-		// // Move Backwards
-		// template.copy().handleBackward(1);
-		// result = true;
-		// }
-		//
-		// } else
-		if (thumb.isExtended()) {
+		// high confidence in the hand model is needed for accepting commands
+		float confidence = firstHand.confidence();
 
-			float confidence = firstHand.confidence();
-			if (confidence > 0.7) {
+		// high confidence and an extended thumb
+		if ((confidence > 0.7) && (thumb.isExtended())) {
 
-				float roll = firstHand.palmNormal().roll();
-				float pitch = firstHand.palmNormal().pitch();
+			float roll = firstHand.palmNormal().roll();
+			float pitch = firstHand.palmNormal().pitch();
 
-				double rollDeg = Math.toDegrees(roll);
-				double pitchDeg = Math.toDegrees(pitch);
+			double rollDeg = Math.toDegrees(roll);
+			double pitchDeg = Math.toDegrees(pitch);
 
-				System.out.println("rollDeg " + rollDeg);
-				System.out.println("Pitchdeg " + pitchDeg);
-				if (pitchDeg > -65) {
-					template.copy().handleBackward(0.5 + (Math.abs(pitchDeg / 100)));
-					result = true;
-				}
-				if (pitchDeg < -110) {
-					template.copy().handleForward(0.5 + (Math.abs(pitchDeg / 100)));
-					result = true;
+			// pitch for forward/backward
+			result = pitchCalculation(result, pitchDeg);
 
-				}
+			// else move right left with the roll movement
 
-				if (rollDeg < -20) {
-					template.copy().handleRight(0.5 + (Math.abs(rollDeg / 100)));
-					result = true;
-				}
-				if (rollDeg > 20) {
-					template.copy().handleLeft(0.5 + (Math.abs(rollDeg / 100)));
-					result = true;
-				}
-				// if (thumb.stabilizedTipPosition().getX() < -50) {
-				// // Move left
-				// template.copy().handleLeft(1);
-				// result = true;
-				//
-				// } else if (indexFinger.stabilizedTipPosition().getX() > 50) {
-				// // Move right
-				// template.copy().handleRight(1);
+			result = result || rollCalculation(result, rollDeg);
 
-			}
 		}
 
 		return result;
 	}
 
 	/**
-	 * Tries to recognize gestures Finger Circle for takeof
+	 * @param result
+	 * @param pitchDeg
+	 * @return
+	 */
+	private boolean pitchCalculation(boolean result, double pitchDeg) {
+		if (pitchDeg > -70) {
+			template.copy().handleBackward(0.5 + (Math.abs(pitchDeg / 100)));
+			result = true;
+		}
+		if (pitchDeg < -110) {
+			template.copy().handleForward(0.5 + (Math.abs(pitchDeg / 100)));
+			result = true;
+		}
+		return result;
+	}
+
+	/**
+	 * @param result
+	 * @param rollDeg
+	 * @return
+	 */
+	private boolean rollCalculation(boolean result, double rollDeg) {
+		if (rollDeg < -20) {
+			template.copy().handleRight(0.5 + (Math.abs(rollDeg / 100)));
+			result = true;
+		}
+		if (rollDeg > 20) {
+			template.copy().handleLeft(0.5 + (Math.abs(rollDeg / 100)));
+			result = true;
+		}
+		return result;
+	}
+
+	/**
+	 * Tries to recognize gestures Finger Circle for takeoff and landing a
+	 * Circle gesture clockwise/counterclockwise for takeoff and landing
 	 * 
 	 * @param frame
 	 */
@@ -224,14 +222,21 @@ public class LeapMotionHandler extends Observable implements Runnable {
 			return false;
 		}
 
-		if ((!Control.data.isFlying()) && (frame.gestures().get(0).type() == Gesture.Type.TYPE_CIRCLE && !Circle)) {
+		if ((frame.gestures().get(0).type() == Gesture.Type.TYPE_CIRCLE && !Circle)) {
 
 			Circle = true;
 			CircleGesture circle = new CircleGesture(frame.gestures().get(0));
 			float progress = circle.progress();
 
 			if (progress > 2.0f) {
-				template.copy().handleStart();
+				// clockwise
+				if (circle.pointable().direction().angleTo(circle.normal()) <= Math.PI / 2) {
+					template.copy().handleStart();
+				} else {
+					// counterclockwise
+					template.copy().handleLand();
+				}
+
 				Circle = false;
 			}
 

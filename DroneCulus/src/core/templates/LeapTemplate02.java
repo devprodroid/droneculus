@@ -67,4 +67,12 @@ public class LeapTemplate02 implements ILeapTemplate {
 		}
 	}
 
+	@Override
+	public void handleLand() {
+		if (Control.data.isFlying()) {
+			Commands.landing();
+			Control.data.setFlying(false);
+		}
+	}
+
 }
