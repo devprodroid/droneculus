@@ -232,11 +232,11 @@ public class ControlContainer extends JPanel {
 					break;
 				case "LeapMotion": // TODO: Insert a new Image
 					image = new ImageIcon(getClass().getResource(
-							"/resources/Xbox-Rift-Template02.png"));
+							"/resources/Xbox-Rift-LeapTemplate03.png"));
 					break;
 				case "LeapMotionHMD":
 					image = new ImageIcon(getClass().getResource(
-							"/resources/Xbox-Rift-Template02.png"));
+							"/resources/Xbox-Rift-HMD-Template4.png"));
 					break;
 
 				default:
