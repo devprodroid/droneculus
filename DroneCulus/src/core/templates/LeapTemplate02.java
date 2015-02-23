@@ -66,6 +66,23 @@ public class LeapTemplate02 implements ILeapTemplate {
 			// Control.data.setFlying(false);
 		}
 	}
+	
+	@Override
+	public void handleYaw(int Yaw) {
+		
+		int speed = Control.data.getSpeed() * Yaw;
+		
+		 if(Yaw > 5) 
+		   	{	    		   
+			 	Commands.spinRight(speed);
+	  	  	}
+		 else if ( Yaw < -5) 
+		 	{
+			 	speed = speed * -1;
+			 	Commands.spinLeft(speed);
+		 	}
+		 
+	}
 
 	@Override
 	public void handleLand() {

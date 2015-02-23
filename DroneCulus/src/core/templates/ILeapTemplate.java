@@ -24,4 +24,6 @@ public interface ILeapTemplate {
 	public void handleStart();
 
 	void handleLand();
+
+	void handleYaw(int Yaw);
 }

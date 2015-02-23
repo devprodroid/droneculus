@@ -2,9 +2,14 @@ package core.leapmotion;
 
 import java.util.Observable;
 
-import org.jfree.data.time.Millisecond;
-
-import com.leapmotion.leap.*;
+import com.leapmotion.leap.CircleGesture;
+import com.leapmotion.leap.Controller;
+import com.leapmotion.leap.Finger;
+import com.leapmotion.leap.FingerList;
+import com.leapmotion.leap.Frame;
+import com.leapmotion.leap.Gesture;
+import com.leapmotion.leap.Hand;
+import com.leapmotion.leap.HandList;
 
 import core.commands.Commands;
 import core.commands.HoverInvoker;
@@ -15,8 +20,9 @@ import core.templates.TemplateVersions.Template;
 import core.utils.Config;
 
 /**
- * @author robert Handler for LeapMotion Controller Analyzes the Gestures and
- *         handels the connection
+ * Handler for LeapMotion Controller Analyzes the Gestures and
+ *         handles the connection
+ * @author robert  
  *
  */
 public class LeapMotionHandler extends Observable implements Runnable {
@@ -58,6 +64,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	/**
 	 * Set Version and add the Observer for hovering
+	 * We enable the used gestures fpr the controller
 	 * 
 	 * @param version
 	 * @param hoverInv
@@ -119,7 +126,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	}
 
 	/**
-	 * Determines the gesture recognized by the LeapMotion in a Frame
+	 * Determines the gestures and movements recognized by the LeapMotion in a Frame
 	 * 
 	 * @param frame
 	 *            the Frame to analyze
@@ -131,6 +138,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		HandList hands = frame.hands();
 		Hand firstHand = hands.get(0);
 
+	
 		if (parseGesture(frame)) {
 			return true;
 		} else if (controlWithPalmOrientation(firstHand)) {
@@ -142,7 +150,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	/**
 	 * We try to find the hands thumb and the palms orientation for controlling
-	 * forward/backward motion with pitch and roll of the hand
+	 * forward/backward motion with pitch and roll of the hand, according to the normal of the palm
 	 * 
 	 * @param firstHand
 	 *            the first detected hand
@@ -160,9 +168,11 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 			float roll = firstHand.palmNormal().roll();
 			float pitch = firstHand.palmNormal().pitch();
-
+			float yaw = firstHand.direction().yaw();
+			
 			double rollDeg = Math.toDegrees(roll);
 			double pitchDeg = Math.toDegrees(pitch);
+			Double yawDeg = Math.toDegrees(yaw);
 
 			// pitch for forward/backward
 			result = pitchCalculation(result, pitchDeg);
@@ -170,12 +180,25 @@ public class LeapMotionHandler extends Observable implements Runnable {
 			// else move right left with the roll movement
 
 			result = result || rollCalculation(result, rollDeg);
-
+			result = result || yawCalculation(result, yawDeg);
 		}
 
 		return result;
 	}
 
+	/**
+	 * @param result
+	 * @param pitchDeg
+	 * @return
+	 */
+	private boolean yawCalculation(boolean result, Double yawDeg) {
+		//Control.out.println("Yaw: "+yawDeg);
+		template.copy().handleYaw(yawDeg.intValue());
+		if (Math.abs(yawDeg)>10) result=true;
+		
+
+		return result;
+	}
 	/**
 	 * @param result
 	 * @param pitchDeg

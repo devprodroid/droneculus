@@ -31,6 +31,7 @@ public class WebcamRunnable extends Observable implements Runnable {
 	VideoCapture capture2 = null;
 
 	public WebcamRunnable() {
+		
 
 	}
 
@@ -67,6 +68,7 @@ public class WebcamRunnable extends Observable implements Runnable {
 
 		if (capture1.isOpened()) {
 			while (true) {
+				
 				capture1.grab();
 
 				if (dualVimicroCameraMode)

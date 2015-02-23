@@ -5,12 +5,19 @@ import com.leapmotion.leap.Controller;
 import core.commands.HoverInvoker;
 import core.templates.TemplateVersions.Template;
 
+/**
+ * @author robert
+ *Initializes the Thread for polling the LEapMotion in the Handler
+ */
 public class LeapMotionManager {
 	LeapMotionHandler handler = null;
 	Controller controller = null;
 
-	// listener etc
 
+
+	/**
+	 * @return LeapMotionController
+	 */
 	public Controller getController() {
 		return controller;
 	}
@@ -33,6 +40,9 @@ public class LeapMotionManager {
 
 	}
 
+	/**
+	 * Init the Thread for polling Frames
+	 */
 	private void initController() {
 
 		new Thread(handler).start();
@@ -50,6 +60,9 @@ public class LeapMotionManager {
 		handler.setWaiting(false);
 	}
 
+	/**
+	 * @return Connected state of the controller
+	 */
 	public boolean isConnected() {
 		return controller.isConnected();
 
