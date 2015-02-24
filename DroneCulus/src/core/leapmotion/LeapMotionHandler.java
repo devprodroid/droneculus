@@ -20,9 +20,10 @@ import core.templates.TemplateVersions.Template;
 import core.utils.Config;
 
 /**
- * Handler for LeapMotion Controller Analyzes the Gestures and
- *         handles the connection
- * @author robert  
+ * Handler for LeapMotion Controller Analyzes the Gestures and handles the
+ * connection
+ * 
+ * @author robert
  *
  */
 public class LeapMotionHandler extends Observable implements Runnable {
@@ -62,9 +63,11 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	 */
 	boolean Circle = false;
 
+	private boolean hmdMode;
+
 	/**
-	 * Set Version and add the Observer for hovering
-	 * We enable the used gestures fpr the controller
+	 * Set Version and add the Observer for hovering We enable the used gestures
+	 * fpr the controller
 	 * 
 	 * @param version
 	 * @param hoverInv
@@ -92,6 +95,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 			if (isConnected) {
 				setChanged();
+
 				if (!analyseFrame(controller.frame())) {
 
 					sleep(Config.MILLIS_FOR_COMMANDS);
@@ -126,7 +130,8 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	}
 
 	/**
-	 * Determines the gestures and movements recognized by the LeapMotion in a Frame
+	 * Determines the gestures and movements recognized by the LeapMotion in a
+	 * Frame
 	 * 
 	 * @param frame
 	 *            the Frame to analyze
@@ -138,7 +143,6 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		HandList hands = frame.hands();
 		Hand firstHand = hands.get(0);
 
-	
 		if (parseGesture(frame)) {
 			return true;
 		} else if (controlWithPalmOrientation(firstHand)) {
@@ -150,7 +154,8 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 	/**
 	 * We try to find the hands thumb and the palms orientation for controlling
-	 * forward/backward motion with pitch and roll of the hand, according to the normal of the palm
+	 * forward/backward motion with pitch and roll of the hand, according to the
+	 * normal of the palm
 	 * 
 	 * @param firstHand
 	 *            the first detected hand
@@ -164,13 +169,12 @@ public class LeapMotionHandler extends Observable implements Runnable {
 		float confidence = firstHand.confidence();
 
 		// high confidence and an extended thumb
-		if ((confidence > 0.7) && (thumb.isExtended())) {
+		if ((confidence > 0.5) && (thumb.isExtended())) {
 
 			float roll = firstHand.palmNormal().roll();
 			float pitch = firstHand.palmNormal().pitch();
 			float yaw = firstHand.direction().yaw();
-			
-			double rollDeg = Math.toDegrees(roll);
+
 			double pitchDeg = Math.toDegrees(pitch);
 			Double yawDeg = Math.toDegrees(yaw);
 
@@ -179,7 +183,7 @@ public class LeapMotionHandler extends Observable implements Runnable {
 
 			// else move right left with the roll movement
 
-			result = result || rollCalculation(result, rollDeg);
+			result = result || rollCalculation(result, roll);
 			result = result || yawCalculation(result, yawDeg);
 		}
 
@@ -192,26 +196,44 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	 * @return
 	 */
 	private boolean yawCalculation(boolean result, Double yawDeg) {
-		//Control.out.println("Yaw: "+yawDeg);
+		 Control.out.println("Yaw: "+yawDeg);
+
+		if (hmdMode) {
+			yawDeg = yawDeg * -1;
+		}
 		template.copy().handleYaw(yawDeg.intValue());
-		if (Math.abs(yawDeg)>10) result=true;
-		
+		if (Math.abs(yawDeg) > 10)
+			result = true;
 
 		return result;
 	}
+
 	/**
 	 * @param result
 	 * @param pitchDeg
 	 * @return
 	 */
 	private boolean pitchCalculation(boolean result, double pitchDeg) {
-		if (pitchDeg > -70) {
-			template.copy().handleBackward(0.5 + (Math.abs(pitchDeg / 100)));
-			result = true;
-		}
-		if (pitchDeg < -110) {
-			template.copy().handleForward(0.5 + (Math.abs(pitchDeg / 100)));
-			result = true;
+
+		if (hmdMode) {
+			if (pitchDeg < 85) {
+				template.copy().handleBackward(1);
+				result = true;
+			}
+			if (pitchDeg > 105) {
+				template.copy().handleForward(1);
+				result = true;
+			}
+
+		} else {
+			if (pitchDeg > -70) {
+				template.copy().handleBackward(1);
+				result = true;
+			}
+			if (pitchDeg < -110) {
+				template.copy().handleForward(1);
+				result = true;
+			}
 		}
 		return result;
 	}
@@ -221,15 +243,24 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	 * @param rollDeg
 	 * @return
 	 */
-	private boolean rollCalculation(boolean result, double rollDeg) {
+	private boolean rollCalculation(boolean result, double roll) {
+
+		if (hmdMode) {
+			roll = Math.sin(roll); // transform for ease of use
+			roll = roll * -1;
+		}
+		double rollDeg = Math.toDegrees(roll);
+
 		if (rollDeg < -20) {
-			template.copy().handleRight(0.5 + (Math.abs(rollDeg / 100)));
+			template.copy().handleRight(1);
 			result = true;
 		}
 		if (rollDeg > 20) {
-			template.copy().handleLeft(0.5 + (Math.abs(rollDeg / 100)));
+			template.copy().handleLeft(1);
 			result = true;
 		}
+
+		// Control.out.println("rollDeg: " + rollDeg);
 		return result;
 	}
 
@@ -281,8 +312,11 @@ public class LeapMotionHandler extends Observable implements Runnable {
 	public void switchVersion(Template version) {
 		setTemplate(LeapTemplateFactory.makeTemplate(version));
 		if (version == Template.LeapMotionHMD) {
+			hmdMode = true;
+
 			controller.setPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
 		} else {
+			hmdMode = false;
 			controller.setPolicy(Controller.PolicyFlag.POLICY_DEFAULT);
 		}
 	}

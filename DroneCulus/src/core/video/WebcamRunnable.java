@@ -49,7 +49,7 @@ public class WebcamRunnable extends Observable implements Runnable {
 
 		if (capture1.isOpened()) {
 			if (Control.data.getBatteryPercentage()>0)
-			Control.isDroneConnected = true;
+			//Control.isDroneConnected = true;
 
 			capture2 = new VideoCapture(Config.WEBCAM_SECONDARY_ID);
 			if (capture2.isOpened() && (capture2.grab())) {

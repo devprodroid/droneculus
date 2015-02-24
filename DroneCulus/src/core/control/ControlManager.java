@@ -143,11 +143,6 @@ public class ControlManager {
 				curLeapManager.switchVersion(version);
 				curLeapManager.start();
 
-				// if (!curLeapManager.isConnected()) {
-
-				// onError("Leap Motion not Connected");
-				// }
-
 			} else {
 				curLeapManager.switchVersion(version);
 				curLeapManager.start();

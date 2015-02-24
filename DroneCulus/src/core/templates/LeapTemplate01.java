@@ -2,7 +2,6 @@ package core.templates;
 
 import core.commands.Commands;
 import core.control.Control;
-import core.oculusrift.OculusRiftEvent;
 
 /**
  * Template LeapMotion Desktop
@@ -69,25 +68,19 @@ public class LeapTemplate01 implements ILeapTemplate {
 			Control.data.setFlying(false);
 		}
 	}
-	
-	
+
 	@Override
 	public void handleYaw(int Yaw) {
-		
-		
 
-		int speed = Control.data.getSpeed() * Yaw/10;
-		
-		 if(Yaw > 10) 
-		   	{	    		   
-			 	Commands.spinRight(speed);
-	  	  	}
-		 else if ( Yaw < -10) 
-		 	{
-			 	speed = speed * -1;
-			 	Commands.spinLeft(speed);
-		 	}
-		 
+		int speed = Control.data.getSpeed() * Yaw / 5;
+
+		if (Yaw > 10) {
+			Commands.spinRight(speed);
+		} else if (Yaw < -10) {
+			speed=speed*-1;
+			Commands.spinLeft(speed);
+		}
+
 	}
 
 	@Override

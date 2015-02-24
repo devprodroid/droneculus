@@ -36,15 +36,15 @@ public class LeapMotionManager {
 		handler = new LeapMotionHandler(version, hoverInv, controller);
 		if (!controller.isConnected())
 			throw new NullPointerException("No LeapMotion Controller found!");
-		initController();
+		initController(version);
 
 	}
 
 	/**
 	 * Init the Thread for polling Frames
 	 */
-	private void initController() {
-
+	private void initController(Template version) {
+		switchVersion(version);
 		new Thread(handler).start();
 	}
 

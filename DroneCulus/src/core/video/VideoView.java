@@ -23,9 +23,9 @@ public class VideoView extends JFrame implements Observer {
 	 * Instance of the WebcamRunnable 
 	 */
 	private WebcamRunnable webcamRunnable;
-
+public boolean enableWebcam;
 	public VideoView(boolean enableWebcam) {
-
+		this.enableWebcam=enableWebcam;
 		// GraphicsEnvironment ge =
 		// GraphicsEnvironment.getLocalGraphicsEnvironment();
 		// GraphicsDevice gs = ge.getDefaultScreenDevice();
@@ -44,10 +44,10 @@ public class VideoView extends JFrame implements Observer {
 			webcamRunnable = new WebcamRunnable();
 			webcamRunnable.addObserver(this);
 			new Thread(webcamRunnable).start();
-
+			new VideoListener(enableWebcam).addObserver(this);
 		} else {
 
-			new VideoListener().addObserver(this);
+			new VideoListener(enableWebcam).addObserver(this);
 		}
 
 	}
