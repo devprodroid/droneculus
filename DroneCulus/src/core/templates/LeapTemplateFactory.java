@@ -7,7 +7,7 @@ public class LeapTemplateFactory {
 	public static ILeapTemplate makeTemplate(Template version) {
 		
 		switch(version) {		
-			case Version1:  //TODO: erstmal nur ein Template für Leapmotion
+			case Version1:  
 				return new LeapTemplate01();
 				
 			case Version2: 

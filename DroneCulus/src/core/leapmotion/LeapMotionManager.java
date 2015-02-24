@@ -6,8 +6,8 @@ import core.commands.HoverInvoker;
 import core.templates.TemplateVersions.Template;
 
 /**
- * @author robert
- *Initializes the Thread for polling the LEapMotion in the Handler
+ * Initializes the Thread for polling the LEapMotion in the Handler
+ * @author robert 
  */
 public class LeapMotionManager {
 	LeapMotionHandler handler = null;
